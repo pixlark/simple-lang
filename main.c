@@ -14,6 +14,16 @@
 #define LEX_NEXT_TOKEN_DEBUG false
 #define PARSE_INIT_DEBUG     false
 
+#define u8  uint8_t
+#define u16 uint16_t
+#define u32 uint32_t
+#define u64 uint64_t
+
+#define s8  int8_t
+#define s16 int16_t
+#define s32 int32_t
+#define s64 int64_t
+
 void fatal(const char * fmt, ...)
 {
 	va_list args;
@@ -296,7 +306,168 @@ void lex_test()
  * <Parser>
  */
 
+typedef struct Stmt_Let   Stmt_Let;
+typedef struct Stmt_While Stmt_While;
+typedef struct Stmt_If    Stmt_If;
+typedef struct Statement  Statement;
+typedef struct Expression Expression;
 
+typedef enum Stmt_Type {
+	STMT_LET,
+	STMT_WHILE,
+	STMT_IF,
+} Stmt_Type;
+
+typedef enum Expr_Type {
+	EXPR_UNARY,
+	EXPR_BINARY,
+	EXPR_NAME,
+	EXPR_LITERAL,
+} Expr_Type;
+
+typedef enum Operator_Type {
+	// Unary
+	OP_NEG = 0,
+	// Binary
+	OP_ADD,
+	OP_SUB,
+	OP_MUL,
+	OP_DIV,
+	OP_EQ,
+	OP_GT,
+	OP_LT,
+	OP_GTE,
+	OP_LTE,
+} Operator_Type;
+
+char * op_to_str[10] = {
+	[OP_NEG] = "-",
+	[OP_ADD] = "+",
+	[OP_SUB] = "-",
+	[OP_MUL] = "*",
+	[OP_DIV] = "/",
+	[OP_EQ]  = "==",
+	[OP_GT]  = ">",
+	[OP_LT]  = "<",
+	[OP_GTE] = ">=",
+	[OP_LTE] = "<=",
+};
+
+typedef struct Statement {
+    Stmt_Type type;
+	union {
+		struct {
+			char * bind_name;
+			Expression * bind_val;
+		} stmt_let;
+		struct {
+			Expression * condition;
+			Statement ** body;
+		} stmt_while;
+		struct {
+			Expression * condition;
+			Statement ** body;
+		} stmt_if;
+    };
+} Statement;
+
+Statement * make_stmt(Stmt_Type type)
+{
+	Statement * stmt = (Statement*) malloc(sizeof(Statement));
+	stmt->type = type;
+	// Necessary initialization (stretchy buffers, etc)
+	switch (type) {
+	case STMT_WHILE:
+		stmt->stmt_while.body = NULL;
+		break;
+	case STMT_IF:
+		stmt->stmt_if.body = NULL;
+		break;
+	}
+	return stmt;
+}
+
+typedef struct Expression {
+    Expr_Type type;
+	union {
+		struct {
+			Operator_Type type;
+			Expression * right;
+		} unary;
+		struct {
+			Operator_Type type;
+			Expression * left;
+			Expression * right;
+		} binary;
+		struct {
+			char * name;
+		} name;
+		struct {
+			u64 value;
+		} literal;
+	};
+} Expression;
+
+Expression * make_expr(Expr_Type type)
+{
+	Expression * expr = (Expression*) malloc(sizeof(Expression));
+	expr->type = type;
+	return expr;
+}
+
+void print_expression(Expression * expr)
+{
+	switch (expr->type) {
+	case EXPR_UNARY:
+		printf("(%s ", op_to_str[expr->unary.type]);
+		print_expression(expr->unary.right);
+		printf(")");
+		break;
+	case EXPR_BINARY:
+		printf("(%s ", op_to_str[expr->binary.type]);
+		print_expression(expr->binary.left);
+		printf(" ");
+		print_expression(expr->binary.right);
+		printf(")");
+		break;
+	case EXPR_NAME:
+		printf("%s", expr->name.name);
+		break;
+	case EXPR_LITERAL:
+		printf("%d", expr->literal.value);
+		break;
+	}
+}
+
+void print_statement(Statement * stmt)
+{
+	switch (stmt->type) {
+	case STMT_LET:
+		printf("(let ");
+		printf("%s ", stmt->stmt_let.bind_name);
+		print_expression(stmt->stmt_let.bind_val);
+		printf(")");
+		break;
+	case STMT_WHILE:
+		printf("(while ");
+		print_expression(stmt->stmt_while.condition);
+		printf(" ");
+		for (int i = 0; i < sb_count(stmt->stmt_while.body); i++) {
+			print_statement(stmt->stmt_while.body[i]);
+		}
+		printf(")");
+		break;
+	case STMT_IF:
+		printf("(if ");
+		print_expression(stmt->stmt_while.condition);
+		printf(" ");
+		for (int i = 0; i < sb_count(stmt->stmt_while.body); i++) {
+			print_statement(stmt->stmt_while.body[i]);
+		}
+		printf(")");
+		break;
+	}
+}
 
 void parse_atom();
 void parse_unary();
@@ -404,6 +575,48 @@ void parse_test()
 	}
 }
 
+void ast_test()
+{
+	// let x = 10;
+	Statement * x_let = make_stmt(STMT_LET);
+	x_let->stmt_let.bind_name = "x";
+
+	Expression * x_let_val = make_expr(EXPR_LITERAL);
+	x_let_val->literal.value = 10;
+	
+	x_let->stmt_let.bind_val = x_let_val;
+
+	print_statement(x_let);
+	printf("\n");
+
+	// while x {
+	//     let x = x - 1;
+	// }
+	Statement * x_while = make_stmt(STMT_WHILE);
+	Expression * while_cond = make_expr(EXPR_NAME);
+	while_cond->name.name = "x";
+	x_while->stmt_while.condition = while_cond;
+
+	Statement * x_dec = make_stmt(STMT_LET);
+	x_dec->stmt_let.bind_name = "x";
+	
+	Expression * x_dec_val = make_expr(EXPR_BINARY);
+	x_dec_val->binary.type = OP_SUB;
+	Expression * x_dec_left = make_expr(EXPR_NAME);
+	x_dec_left->name.name = "x";
+	x_dec_val->binary.left = x_dec_left;
+	Expression * x_dec_right = make_expr(EXPR_LITERAL);
+	x_dec_right->literal.value = 1;
+	x_dec_val->binary.right = x_dec_right;
+
+	x_dec->stmt_let.bind_val = x_dec_val;
+
+	sb_push(x_while->stmt_while.body, x_dec);
+
+	print_statement(x_while);
+	printf("\n");
+}
+
 /* </Parser> */
 
 int main()
@@ -412,5 +625,6 @@ int main()
 	lex_init();
 	lex_test();
 	parse_test();
+	ast_test();
 	return 0;
 }
