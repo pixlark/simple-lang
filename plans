@@ -1,0 +1,24 @@
+1 + 3;
+
+let y = 3;
+let x = (y + 3);
+
+while x {
+    let x = x - 1;
+};
+
+if x {
+   let y = 100;
+};
+
+EBNF:
+
+atom = LITERAL | NAME | '(' expression ')'
+unary = [-] atom
+factor = unary {('*' | '/') unary}
+expression = factor {('+' | '-') factor}
+let = 'let' NAME '=' expression
+while = 'while' expression '{' {statement} '}'
+if = 'if' expression '{' {statement} '}'
+statement = (let|while|if) ';'
+
