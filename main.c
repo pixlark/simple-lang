@@ -93,6 +93,10 @@ typedef enum Token_Type {
 	TOKEN_LET,
 	TOKEN_WHILE,
 	TOKEN_IF,
+	// Two-char nonterminals
+	TOKEN_EQ,
+	TOKEN_GTE,
+	TOKEN_LTE,
 } Token_Type;
 
 typedef struct Token {
@@ -125,6 +129,15 @@ void token_type_str(char * buf, Token_Type type)
 			break;
 		case TOKEN_IF:
 			sprintf(buf, "If");
+			break;
+		case TOKEN_GTE:
+			sprintf(buf, ">=");
+			break;
+		case TOKEN_LTE:
+			sprintf(buf, "<=");
+			break;
+		case TOKEN_EQ:
+			sprintf(buf, "==");
 			break;
 		}
 	}
@@ -197,11 +210,45 @@ void _next_token()
 		} else if (token.name == if_keyword) {
 			token.type = TOKEN_IF;
 		}
-	} else if (*stream == ' ' || *stream == '\t' || *stream == '\n') {
-		*stream++;
-		_next_token();
 	} else {
-		token.type = *stream++;
+		switch (*stream) {
+		case ' ':
+		case '\t':
+		case '\n':
+			stream++;
+			_next_token();
+			break;
+		case '>':
+			stream++;
+			if (*stream == '=') {
+				stream++;
+				token.type = TOKEN_GTE;
+			} else {
+				token.type = '>';
+			}
+			break;
+		case '<':
+			stream++;
+			if (*stream == '=') {
+				stream++;
+				token.type = TOKEN_GTE;
+			} else {
+				token.type = '<';
+			}
+			break;
+		case '=':
+			stream++;
+			if (*stream == '=') {
+				stream++;
+				token.type = TOKEN_EQ;
+			} else {
+				token.type = '=';
+			}
+			break;
+		default:
+			token.type = *stream++;
+			break;
+		}
 	}
 	token.source_end = stream;
 }
@@ -236,6 +283,15 @@ bool match_token(Token_Type type)
 	return false;
 }
 
+void fatal_expected(Token_Type expected_type, Token_Type got_type)
+{
+	char expected[256];
+	char got     [256];
+	token_type_str(expected, expected_type);
+	token_type_str(got,      got_type);
+	fatal("Expected token %s, got token %s", expected, got);
+}
+
 /* Checks that the next token is of the expected type. If it's not,
  * an error occurs.
  */
@@ -245,11 +301,12 @@ bool expect_token(Token_Type type)
 		next_token();
 		return true;
 	}
-	char expected[256];
-	char got     [256];
-	token_type_str(expected, type);
-	token_type_str(got, token.type);
-	fatal("Expected token %s, got token %s", expected, got);
+	fatal_expected(type, token.type);
+}
+
+bool check_token(Token_Type type) {
+	if (is_token(type)) return true;
+	fatal_expected(type, token.type);
 }
 
 #define _assert_token(x) \
@@ -277,7 +334,7 @@ void lex_test()
 {
 	const char * source =
 		"let x = 15;\n"
-		"while x {\n"
+		"while x >= 0 {\n"
 		"    let x = x - 1;\n"
 		"};";
 	init_stream(source);
@@ -288,6 +345,8 @@ void lex_test()
 	assert_token(';');
 	assert_token(TOKEN_WHILE);
 	assert_token_name("x");
+	assert_token(TOKEN_GTE);
+	assert_token_literal(0);
 	assert_token('{');
 	assert_token(TOKEN_LET);
 	assert_token_name("x");
@@ -353,11 +412,23 @@ char * op_to_str[10] = {
 	[OP_LTE] = "<=",
 };
 
+Operator_Type token_to_bin_op[] = {
+	['+']       = OP_ADD,
+	['-']       = OP_SUB,
+	['*']       = OP_MUL,
+	['/']       = OP_DIV,
+	[TOKEN_EQ]  = OP_EQ,
+	['>']       = OP_GT,
+	['<']       = OP_LT,
+	[TOKEN_GTE] = OP_GTE,
+	[TOKEN_LTE] = OP_GTE,
+};
+
 typedef struct Statement {
     Stmt_Type type;
 	union {
 		struct {
-			char * bind_name;
+			const char * bind_name;
 			Expression * bind_val;
 		} stmt_let;
 		struct {
@@ -400,7 +471,7 @@ typedef struct Expression {
 			Expression * right;
 		} binary;
 		struct {
-			char * name;
+			const char * name;
 		} name;
 		struct {
 			u64 value;
@@ -454,124 +525,223 @@ void print_statement(Statement * stmt)
 		printf(" ");
 		for (int i = 0; i < sb_count(stmt->stmt_while.body); i++) {
 			print_statement(stmt->stmt_while.body[i]);
+			if (i != sb_count(stmt->stmt_while.body) - 1)
+				printf(" ");
 		}
 		printf(")");
 		break;
 	case STMT_IF:
 		printf("(if ");
-		print_expression(stmt->stmt_while.condition);
+		print_expression(stmt->stmt_if.condition);
 		printf(" ");
-		for (int i = 0; i < sb_count(stmt->stmt_while.body); i++) {
-			print_statement(stmt->stmt_while.body[i]);
+		for (int i = 0; i < sb_count(stmt->stmt_if.body); i++) {
+			print_statement(stmt->stmt_if.body[i]);
+			if (i != sb_count(stmt->stmt_if.body) - 1)
+				printf(" ");
 		}
 		printf(")");
 		break;
 	}
 }
 
-void parse_atom();
-void parse_unary();
-void parse_factor();
-void parse_expression();
-void parse_let();
-void parse_while();
-void parse_if();
-void parse_statement();
+/* Operator precedences:
+ *   HIGHEST
+ * 0   - (negate)   | right-associative
+ * 1   * /          | left-associative
+ * 2   + -          | left-associative
+ * 3   == > < >= <= | left-associative
+ *   LOWEST
+ */
 
-void parse_atom()
+Expression * parse_atom();
+Expression * parse_expr_0();
+Expression * parse_expr_1();
+Expression * parse_expr_2();
+Expression * parse_expression();
+Statement  * parse_let();
+Statement  * parse_while();
+Statement  * parse_if();
+Statement  * parse_statement();
+
+Expression * parse_atom()
 {
+	Expression * expr;
 	switch (token.type) {
 	case TOKEN_LITERAL:
+		expr = make_expr(EXPR_LITERAL);
+		expr->literal.value = token.literal;
 		next_token();
 		break;
 	case TOKEN_NAME:
+		expr = make_expr(EXPR_NAME);
+		expr->name.name = token.name;
 		next_token();
 		break;
 	case '(':
 		next_token();
-		parse_expression();
+		expr = parse_expression();
 		expect_token(')');
 		break;
 	}
+	return expr;
 }
 
-void parse_unary()
+Expression * parse_expr_0()
 {
+	Expression * expr;
 	if (token.type == '-') {
+		expr = make_expr(EXPR_UNARY);
+		expr->unary.type = OP_NEG;
 		next_token();
-		parse_unary();
+		expr->unary.right = parse_expr_0();
 	} else {
-		parse_atom();
+		expr = parse_atom();
 	}
+	return expr;
 }
 
-void parse_factor()
+bool is_token_expr_1()
 {
-	parse_unary();
-	while (token.type == '*' || token.type == '/') {
+	return is_token('*') || is_token('/');
+}
+
+Expression * parse_expr_1()
+{
+	Expression * left = parse_expr_0();
+	while (is_token_expr_1()) {
+		Expression * expr = make_expr(EXPR_BINARY);
+		expr->binary.left = left;
+		expr->binary.type = token_to_bin_op[token.type];
 		next_token();
-		parse_unary();
+		expr->binary.right = parse_expr_0();
+		left = expr;
 	}
+	return left;
 }
 
-void parse_expression()
+bool is_token_expr_2()
 {
-	parse_factor();
-	while (token.type == '+' || token.type == '-') {
+	return is_token('+') || is_token('-');
+}
+
+Expression * parse_expr_2()
+{
+	Expression * left = parse_expr_1();
+	while (is_token_expr_2()) {
+		Expression * expr = make_expr(EXPR_BINARY);
+		expr->binary.left = left;
+		expr->binary.type = token_to_bin_op[token.type];
 		next_token();
-		parse_factor();
+		expr->binary.right = parse_expr_1();
+		left = expr;
 	}
+	return left;
 }
 
-void parse_let()
+bool is_token_expr_3()
 {
-	expect_token(TOKEN_NAME);
+	return
+		is_token(TOKEN_EQ) ||
+		is_token('>') ||
+		is_token('<') ||
+		is_token(TOKEN_GTE) ||
+		is_token(TOKEN_LTE);
+}
+
+Expression * parse_expr_3()
+{
+	Expression * left = parse_expr_2();
+	while (is_token_expr_3()) {
+		Expression * expr = make_expr(EXPR_BINARY);
+		expr->binary.left = left;
+		expr->binary.type = token_to_bin_op[token.type];
+		next_token();
+		expr->binary.right = parse_expr_2();
+		left = expr;
+	}
+	return left;
+}
+
+Expression * parse_expression()
+{
+	return parse_expr_3();
+}
+
+Statement * parse_let()
+{
+	Statement * stmt = make_stmt(STMT_LET);
+	check_token(TOKEN_NAME);
+	stmt->stmt_let.bind_name = token.name;
+	next_token();
 	expect_token('=');
-	parse_expression();
+	stmt->stmt_let.bind_val = parse_expression();
 }
 
-void parse_while()
+Statement * parse_while()
 {
-	parse_expression();
+	Statement * stmt = make_stmt(STMT_WHILE);
+	stmt->stmt_while.condition = parse_expression();
 	expect_token('{');
 	while (!match_token('}')) {
-		parse_statement();
+		sb_push(stmt->stmt_while.body, parse_statement());
 	}
+	return stmt;
 }
 
-void parse_if()
+Statement * parse_if()
 {
-	parse_expression();
+	Statement * stmt = make_stmt(STMT_IF);
+	stmt->stmt_if.condition = parse_expression();
 	expect_token('{');
 	while (!match_token('}')) {
-		parse_statement();
+		sb_push(stmt->stmt_if.body, parse_statement());
 	}
+	return stmt;
 }
 
-void parse_statement()
+Statement * parse_statement()
 {
+	Statement * stmt;
 	if (is_token(TOKEN_LET)) {
 		next_token();
-		parse_let();
+		stmt = parse_let();
 	} else if (is_token(TOKEN_WHILE)) {
 		next_token();
-		parse_while();
+		stmt = parse_while();
 	} else if (is_token(TOKEN_IF)) {
 		next_token();
-		parse_if();
+		stmt = parse_if();
 	} else {
-		parse_expression();
+		fatal("Not a statement");
 	}
 	expect_token(';');
+	return stmt;
+}
+
+char * load_string_from_file(char * path)
+{
+	FILE * file = fopen(path, "r");
+	if (file == NULL) return NULL;
+	int file_len = 0;
+	while (fgetc(file) != EOF) file_len++;
+	char * str = (char*) malloc(file_len + 1);
+	str[file_len] = '\0';
+	fseek(file, 0, SEEK_SET);
+	for (int i = 0; i < file_len; i++) str[i] = fgetc(file);
+	fclose(file);
+	return str;
 }
 
 void parse_test()
 {
-	const char * source =
-		"while x { let x = x - 1; };";
+	const char * source = load_string_from_file("fibonacci.sl");
 	init_stream(source);
 	while (token.type) {
-		parse_statement();
+		//Expression * expr = parse_expression();
+		//print_expression(expr);
+		Statement * stmt = parse_statement();
+		print_statement(stmt);
+		printf("\n");
 	}
 }
 
@@ -625,6 +795,6 @@ int main()
 	lex_init();
 	lex_test();
 	parse_test();
-	ast_test();
+	//ast_test();
 	return 0;
 }
