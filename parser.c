@@ -111,25 +111,6 @@ void print_statement(Statement * stmt)
 	}
 }
 
-/* Operator precedences:
- *   HIGHEST
- * 0   - (negate)   | right-associative
- * 1   * /          | left-associative
- * 2   + -          | left-associative
- * 3   == > < >= <= | left-associative
- *   LOWEST
- */
-
-Expression * parse_atom();
-Expression * parse_expr_0();
-Expression * parse_expr_1();
-Expression * parse_expr_2();
-Expression * parse_expression();
-Statement  * parse_let();
-Statement  * parse_while();
-Statement  * parse_if();
-Statement  * parse_statement();
-
 Expression * parse_atom()
 {
 	Expression * expr;
