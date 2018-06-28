@@ -8,5 +8,5 @@ while i < iterations {
 	let b = a + b;
 	let a = tmp;
 	
-	let i = i - 1;
+	let i = i + 1;
 };
