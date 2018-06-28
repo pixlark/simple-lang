@@ -194,13 +194,15 @@ void vm_print_state(VM * vm)
  * Operators
  */
 
-#define BINARY_OPERATOR_INIT \
+#define BINARY_OPERATOR(_OP_)	\
 	Item b = spop(); \
 	Item a = spop(); \
 	if (b.type != ITEM_LITERAL || a.type != ITEM_LITERAL) { \
 		internal_error("Non-literals were plugged into an operator"); \
 	} \
-	Item c = {ITEM_LITERAL};
+	Item c = {ITEM_LITERAL}; \
+	c.literal.val = a.literal.val _OP_ b.literal.val;	\
+	spush(c);
 
 void operator_neg(VM * vm)
 {
@@ -213,68 +215,23 @@ void operator_neg(VM * vm)
 	spush(c);
 }
 
-void operator_add(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = a.literal.val + b.literal.val;
-	spush(c);
-}
+void operator_add(VM * vm) { BINARY_OPERATOR(+); }
 
-void operator_sub(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = a.literal.val - b.literal.val;
-	spush(c);
-}
+void operator_sub(VM * vm) { BINARY_OPERATOR(-); }
 
-void operator_mul(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = a.literal.val * b.literal.val;
-	spush(c);
-}
+void operator_mul(VM * vm) { BINARY_OPERATOR(*); }
 
-void operator_div(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = a.literal.val / b.literal.val;
-	spush(c);
-}
+void operator_div(VM * vm) { BINARY_OPERATOR(/); }
 
-void operator_eq(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = (int) (a.literal.val == b.literal.val);
-	spush(c);
-}
+void operator_eq(VM * vm)  { BINARY_OPERATOR(==); }
 
-void operator_gt(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = (int) (a.literal.val > b.literal.val);
-	spush(c);
-}
+void operator_gt(VM * vm)  { BINARY_OPERATOR(>); }
 
-void operator_lt(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = (int) (a.literal.val < b.literal.val);
-	spush(c);
-}
+void operator_lt(VM * vm)  { BINARY_OPERATOR(<); }
 
-void operator_gte(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = (int) (a.literal.val >= b.literal.val);
-	spush(c);
-}
+void operator_gte(VM * vm) { BINARY_OPERATOR(>=); }
 
-void operator_lte(VM * vm)
-{
-	BINARY_OPERATOR_INIT;
-	c.literal.val = (int) (a.literal.val <= b.literal.val);
-	spush(c);
-}
+void operator_lte(VM * vm) { BINARY_OPERATOR(<=); }
 
 void (*operators[])(VM*) = {
 	[OP_NEG] = operator_neg,
