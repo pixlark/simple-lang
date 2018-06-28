@@ -5,7 +5,7 @@ Map * make_map(size_t size)
 	Map * map = malloc(sizeof(Map));
 	map->keys   = malloc(sizeof(u64)  * size);
 	map->values = malloc(sizeof(u64)  * size);
-	map->taken  = calloc(sizeof(bool) * size, 0);
+	map->taken  = calloc(size, sizeof(bool));
 	map->size = size;
 	return map;
 }

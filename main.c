@@ -1,4 +1,5 @@
 #include "common.h"
+#include "compiler.h"
 #include "error.h"
 #include "intern.h"
 #include "lexer.h"
@@ -15,5 +16,6 @@ int main()
 	//parse_test();
 	//ast_test();
 	vm_test();
+	compile_test();
 	return 0;
 }

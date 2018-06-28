@@ -1,7 +1,7 @@
 #include "parser.h"
 
 char * op_to_str[10] = {
-	[OP_NEG] = "-",
+	[OP_NEG] = "NEG",
 	[OP_ADD] = "+",
 	[OP_SUB] = "-",
 	[OP_MUL] = "*",
