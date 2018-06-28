@@ -137,7 +137,9 @@ bool vm_step(VM * vm)
 			internal_error("The VM tried to resolve something that's not a variable");
 		}
 		u64 recieve;
-		map_index(vm->symbol_table, (u64) top.variable.name, &recieve);
+		if (!map_index(vm->symbol_table, (u64) top.variable.name, &recieve)) {
+			fatal("Name '%s' is not bound.", top.variable.name);
+		}
 		Item new_top;
 		new_top.type = ITEM_LITERAL;
 		new_top.literal.val = (s64) recieve;

@@ -5,4 +5,4 @@
 #include "parser.h"
 
 void compile_expression(VM * vm, Expression * expression);
-void compile_test();
+void compile_statement(VM * vm, Statement * stmt);
