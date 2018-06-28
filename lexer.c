@@ -53,25 +53,16 @@ void print_token(Token token)
 Token token;
 const char * stream;
 
-const char * let_keyword;
-const char * while_keyword;
-const char * if_keyword;
-const char * print_keyword;
-
-void next_token();
+Map * keyword_map;
 
 void lex_init()
 {
-	let_keyword = str_intern("let");
-	while_keyword = str_intern("while");
-	if_keyword = str_intern("if");
-	print_keyword = str_intern("print");
-	#if PARSE_INIT_DEBUG
-	printf("let:   %p\n", let_keyword);
-	printf("while: %p\n", while_keyword);
-	printf("if:    %p\n", if_keyword);
-	printf("print: %p\n", print_keyword);
-	#endif
+	keyword_map = make_map(16);
+
+	map_insert(keyword_map, (u64) str_intern("let"),   (u64) TOKEN_LET);
+	map_insert(keyword_map, (u64) str_intern("while"), (u64) TOKEN_WHILE);
+	map_insert(keyword_map, (u64) str_intern("if"),    (u64) TOKEN_IF);
+	map_insert(keyword_map, (u64) str_intern("print"), (u64) TOKEN_PRINT);
 }
 
 void init_stream(const char * source)
@@ -98,15 +89,8 @@ void _next_token()
 			stream++;
 		}
 		token.name = str_intern_range(token.source_start, stream);
-		// TODO(pixlark): Refactor this into pointer->enum hash table?
-		if (token.name == let_keyword) {
-			token.type = TOKEN_LET;
-		} else if (token.name == while_keyword) {
-			token.type = TOKEN_WHILE;
-		} else if (token.name == if_keyword) {
-			token.type = TOKEN_IF;
-		} else if (token.name == print_keyword) {
-			token.type = TOKEN_PRINT;
+		if (map_index(keyword_map, (u64) token.name, NULL)) {
+			map_index(keyword_map, (u64) token.name, (u64*) &token.type);
 		}
 	} else {
 		switch (*stream) {
@@ -206,6 +190,27 @@ bool check_token(Token_Type type) {
 	if (is_token(type)) return true;
 	fatal_expected(type, token.type);
 }
+
+#define _assert_token(x) \
+	assert(match_token(x))
+#define _assert_token_name(x) \
+	assert(token.name == str_intern(x) && match_token(TOKEN_NAME))
+#define _assert_token_literal(x) \
+	assert(token.literal == (x) && match_token(TOKEN_LITERAL))
+#define _assert_token_eof(x) \
+	assert(is_token(EOF))
+
+#if LEX_TEST_DEBUG
+#define assert_token(x) (print_token(token), _assert_token(x))
+#define assert_token_name(x) (print_token(token), _assert_token_name(x))
+#define assert_token_literal(x) (print_token(token), _assert_token_literal(x))
+#define assert_token_eof(x) (print_token(token), _assert_token_eof(x))
+#else
+#define assert_token _assert_token
+#define assert_token_name _assert_token_name
+#define assert_token_literal _assert_token_literal
+#define assert_token_eof _assert_token_eof
+#endif
 
 void lex_test()
 {

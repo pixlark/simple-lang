@@ -42,7 +42,7 @@ bool map_index(Map * map, u64 key, u64 * value)
 		if (counter++ >= map->size) return false;
 		position = (position + 1) % map->size;
 	}
-	*value = map->values[position];
+	if (value) *value = map->values[position];
 	return true;
 }
 
