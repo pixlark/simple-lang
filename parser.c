@@ -130,6 +130,11 @@ Expression * parse_atom()
 		expr = parse_expression();
 		expect_token(')');
 		break;
+	default: {
+		char buf[256];
+		token_type_str(buf, token.type);
+		fatal("Token %s is not valid inside expression.", buf);
+	} break;
 	}
 	return expr;
 }

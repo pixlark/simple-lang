@@ -1,3 +1,1 @@
-while x {
-	let y = 1;
-};
+print;

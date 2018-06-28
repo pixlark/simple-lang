@@ -29,6 +29,7 @@ typedef struct Token {
 	};
 } Token;
 
+void token_type_str(char * buf, Token_Type type);
 void print_token(Token token);
 
 extern Token token;
