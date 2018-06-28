@@ -2,12 +2,6 @@
 #include "lexer.h"
 #include "error.h"
 
-typedef struct Stmt_Let   Stmt_Let;
-typedef struct Stmt_While Stmt_While;
-typedef struct Stmt_If    Stmt_If;
-typedef struct Statement  Statement;
-typedef struct Expression Expression;
-
 typedef enum Stmt_Type {
 	STMT_LET,
 	STMT_WHILE,
@@ -37,8 +31,11 @@ typedef enum Operator_Type {
 	OP_LTE,
 } Operator_Type;
 
-extern char * op_to_str[10];
+extern char * op_to_str[];
 extern Operator_Type token_to_bin_op[];
+
+typedef struct Statement  Statement;
+typedef struct Expression Expression;
 
 typedef struct Statement {
     Stmt_Type type;
@@ -61,8 +58,6 @@ typedef struct Statement {
     };
 } Statement;
 
-Statement * make_stmt(Stmt_Type type);
-
 typedef struct Expression {
     Expr_Type type;
 	union {
@@ -84,11 +79,11 @@ typedef struct Expression {
 	};
 } Expression;
 
+Statement * make_stmt(Stmt_Type type);
 Expression * make_expr(Expr_Type type);
 
-void print_expression(Expression * expr);
-
 void print_statement(Statement * stmt);
+void print_expression(Expression * expr);
 
 /* Operator precedences:
  *   HIGHEST
@@ -107,10 +102,7 @@ Expression * parse_expression();
 Statement  * parse_let();
 Statement  * parse_while();
 Statement  * parse_if();
+Statement  * parse_print();
 Statement  * parse_statement();
 
-char * load_string_from_file(char * path);
-
 void parse_test();
-
-void ast_test();

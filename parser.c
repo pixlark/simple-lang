@@ -1,6 +1,6 @@
 #include "parser.h"
 
-char * op_to_str[10] = {
+char * op_to_str[] = {
 	[OP_NEG] = "NEG",
 	[OP_ADD] = "+",
 	[OP_SUB] = "-",
@@ -295,20 +295,6 @@ Statement * parse_statement()
 	return stmt;
 }
 
-char * load_string_from_file(char * path)
-{
-	FILE * file = fopen(path, "r");
-	if (file == NULL) return NULL;
-	int file_len = 0;
-	while (fgetc(file) != EOF) file_len++;
-	char * str = (char*) malloc(file_len + 1);
-	str[file_len] = '\0';
-	fseek(file, 0, SEEK_SET);
-	for (int i = 0; i < file_len; i++) str[i] = fgetc(file);
-	fclose(file);
-	return str;
-}
-
 void parse_test()
 {
 	const char * source = load_string_from_file("fibonacci.sl");
@@ -318,46 +304,4 @@ void parse_test()
 		print_statement(stmt);
 		printf("\n");
 	}
-}
-
-void ast_test()
-{
-	// let x = 10;
-	Statement * x_let = make_stmt(STMT_LET);
-	x_let->stmt_let.bind_name = "x";
-
-	Expression * x_let_val = make_expr(EXPR_LITERAL);
-	x_let_val->literal.value = 10;
-	
-	x_let->stmt_let.bind_val = x_let_val;
-
-	print_statement(x_let);
-	printf("\n");
-
-	// while x {
-	//     let x = x - 1;
-	// }
-	Statement * x_while = make_stmt(STMT_WHILE);
-	Expression * while_cond = make_expr(EXPR_NAME);
-	while_cond->name.name = "x";
-	x_while->stmt_while.condition = while_cond;
-
-	Statement * x_dec = make_stmt(STMT_LET);
-	x_dec->stmt_let.bind_name = "x";
-	
-	Expression * x_dec_val = make_expr(EXPR_BINARY);
-	x_dec_val->binary.type = OP_SUB;
-	Expression * x_dec_left = make_expr(EXPR_NAME);
-	x_dec_left->name.name = "x";
-	x_dec_val->binary.left = x_dec_left;
-	Expression * x_dec_right = make_expr(EXPR_LITERAL);
-	x_dec_right->literal.value = 1;
-	x_dec_val->binary.right = x_dec_right;
-
-	x_dec->stmt_let.bind_val = x_dec_val;
-
-	sb_push(x_while->stmt_while.body, x_dec);
-
-	print_statement(x_while);
-	printf("\n");
 }

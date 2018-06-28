@@ -26,3 +26,4 @@
 #define s32 int32_t
 #define s64 int64_t
 
+char * load_string_from_file(char * path);

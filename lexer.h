@@ -35,13 +35,10 @@ extern Token token;
 extern const char * stream;
 
 void lex_init();
-
 void init_stream(const char * source);
 
 void next_token();
-
 bool is_token(Token_Type type);
-
 bool is_token_name(const char * name);
 
 /* Checks that the next token is of the expected type. If so, it
@@ -49,13 +46,12 @@ bool is_token_name(const char * name);
  */ 
 bool match_token(Token_Type type);
 
-void fatal_expected(Token_Type expected_type, Token_Type got_type);
-
 /* Checks that the next token is of the expected type. If it's not,
  * an error occurs.
  */
 bool expect_token(Token_Type type);
-
 bool check_token(Token_Type type);
+
+void fatal_expected(Token_Type expected_type, Token_Type got_type);
 
 void lex_test();
