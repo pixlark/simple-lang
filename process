@@ -1,0 +1,20 @@
+Features to be added (in order):
+ - Function definition and calling
+ - Simple type system
+ - Arrays and memory management
+
+Feature process:
+
+ - Implement feature
+ - Clean up code
+ - Look for bugs
+ - Final pass-over
+ - Repeat
+
+Current place:
+
+ Feature: Simple Lexer-Parser-Compiler-VM path
+  [x] Implement feature
+  [ ] Clean up code
+  [ ] Look for bugs
+  [ ] Final pass-over
