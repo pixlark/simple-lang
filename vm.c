@@ -198,22 +198,22 @@ void vm_print_state(VM * vm)
 	Item b = spop(); \
 	Item a = spop(); \
 	if (b.type != ITEM_LITERAL || a.type != ITEM_LITERAL) { \
-		internal_error("Non-literals were plugged into an operator"); \
+		internal_error("Non-literals were plugged into a binary operator"); \
 	} \
 	Item c = {ITEM_LITERAL}; \
 	c.literal.val = a.literal.val _OP_ b.literal.val;	\
 	spush(c);
 
-void operator_neg(VM * vm)
-{
-	Item a = spop();
-	if (a.type != ITEM_LITERAL) {
-		internal_error("Non-literals were plugged into an operator");
-	}
-	Item c = {ITEM_LITERAL};
-	c.literal.val = -a.literal.val;
+#define UNARY_OPERATOR(_OP_) \
+	Item a = spop(); \
+	if (a.type != ITEM_LITERAL) { \
+		internal_error("Non-literals were plugged into a unary operator"); \
+	} \
+	Item c = {ITEM_LITERAL}; \
+	c.literal.val = _OP_ a.literal.val; \
 	spush(c);
-}
+
+void operator_neg(VM * vm) { UNARY_OPERATOR(-); }
 
 void operator_add(VM * vm) { BINARY_OPERATOR(+); }
 
