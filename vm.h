@@ -74,5 +74,3 @@ bool vm_step(VM * vm);
 void vm_print_state(VM * vm);
 
 extern void (*operators[])(VM*);
-
-void vm_test();

@@ -194,6 +194,15 @@ void vm_print_state(VM * vm)
  * Operators
  */
 
+#define UNARY_OPERATOR(_OP_) \
+	Item a = spop(); \
+	if (a.type != ITEM_LITERAL) { \
+		internal_error("Non-literals were plugged into a unary operator"); \
+	} \
+	Item c = {ITEM_LITERAL}; \
+	c.literal.val = _OP_ a.literal.val; \
+	spush(c);
+
 #define BINARY_OPERATOR(_OP_)	\
 	Item b = spop(); \
 	Item a = spop(); \
@@ -204,33 +213,15 @@ void vm_print_state(VM * vm)
 	c.literal.val = a.literal.val _OP_ b.literal.val;	\
 	spush(c);
 
-#define UNARY_OPERATOR(_OP_) \
-	Item a = spop(); \
-	if (a.type != ITEM_LITERAL) { \
-		internal_error("Non-literals were plugged into a unary operator"); \
-	} \
-	Item c = {ITEM_LITERAL}; \
-	c.literal.val = _OP_ a.literal.val; \
-	spush(c);
-
-void operator_neg(VM * vm) { UNARY_OPERATOR(-); }
-
-void operator_add(VM * vm) { BINARY_OPERATOR(+); }
-
-void operator_sub(VM * vm) { BINARY_OPERATOR(-); }
-
-void operator_mul(VM * vm) { BINARY_OPERATOR(*); }
-
-void operator_div(VM * vm) { BINARY_OPERATOR(/); }
-
-void operator_eq(VM * vm)  { BINARY_OPERATOR(==); }
-
-void operator_gt(VM * vm)  { BINARY_OPERATOR(>); }
-
-void operator_lt(VM * vm)  { BINARY_OPERATOR(<); }
-
+void operator_neg(VM * vm) { UNARY_OPERATOR(-);   }
+void operator_add(VM * vm) { BINARY_OPERATOR(+);  }
+void operator_sub(VM * vm) { BINARY_OPERATOR(-);  }
+void operator_mul(VM * vm) { BINARY_OPERATOR(*);  }
+void operator_div(VM * vm) { BINARY_OPERATOR(/);  }
+void operator_eq (VM * vm) { BINARY_OPERATOR(==); }
+void operator_gt (VM * vm) { BINARY_OPERATOR(>);  }
+void operator_lt (VM * vm) { BINARY_OPERATOR(<);  }
 void operator_gte(VM * vm) { BINARY_OPERATOR(>=); }
-
 void operator_lte(VM * vm) { BINARY_OPERATOR(<=); }
 
 void (*operators[])(VM*) = {
@@ -246,53 +237,3 @@ void (*operators[])(VM*) = {
 	[OP_LTE] = operator_lte,
 };
 
-void vm_test()
-{
-	// TODO(pixlark): Make actual tests here, these are outdated and don't work anymore
-	return;
-	
-	VM _vm;
-	VM * vm = &_vm;
-	vm_init(vm);
-	
-	const char * varname = "x";
-	const char * varname2 = "y";
-
-	ipush(((Instruction){INST_PUSH, (Item){ITEM_LITERAL, .literal.val = 3}}));
-	
-	ipush(((Instruction){INST_PUSH, (Item){ITEM_LITERAL, .literal.val = -32}}));
-	ipush(((Instruction){INST_BIND, .arg0.name = varname}));
-	
-	ipush(((Instruction){INST_PUSH, (Item){ITEM_LITERAL, .literal.val = 12}}));
-	ipush(((Instruction){INST_BIND, .arg0.name = varname2}));
-	
-	Item item = {ITEM_VARIABLE};
-	item.variable.name = varname;
-	ipush(((Instruction){INST_PUSH, item}));
-	ipush(((Instruction){INST_RESOLVE}));
-	
-	
-	Item item2 = {ITEM_VARIABLE};
-	item2.variable.name = varname2;
-	ipush(((Instruction){INST_PUSH, item2}));	
-	ipush(((Instruction){INST_RESOLVE}));
-
-	ipush(((Instruction){INST_OPERATOR, .arg0.op_type = OP_ADD}));
-	ipush(((Instruction){INST_POP}));
-
-	ipush(((Instruction){INST_PUSH, (Item){ITEM_LITERAL, .literal.val = 1}}));
-	ipush(((Instruction){INST_OPERATOR, .arg0.op_type = OP_SUB}));
-
-	ipush(((Instruction){INST_JNZ, .arg0.jmp_mark = 1}));
-	
-	ipush(((Instruction){INST_HALT}));
-	
-	do {
-		#if VM_TEST_DEBUG
-		vm_print_state(vm);
-		#endif
-	} while (vm_step(vm));
-
-	assert(sb_last(vm->stack.arr).type == ITEM_LITERAL);
-	assert(sb_last(vm->stack.arr).literal.val == 0);
-}

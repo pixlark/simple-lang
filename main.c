@@ -17,8 +17,6 @@ int main()
 	
 	parse_test();
 	
-	vm_test();
-	
 	compile_test();
 	
 	return 0;
