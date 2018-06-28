@@ -3,8 +3,6 @@
 #include "parser.h"
 #include "map.h"
 
-#define VM_TEST_DEBUG false
-
 typedef enum Item_Type {
 	ITEM_VARIABLE,
 	ITEM_LITERAL,

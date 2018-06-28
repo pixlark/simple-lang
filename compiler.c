@@ -77,27 +77,22 @@ void compile_test()
 	vm_init(vm);
 	
 	const char * source = load_string_from_file("fibonacci.sl");
+	init_stream(source);
 	
 	#if COMPILE_TEST_DEBUG
 	printf("-------\nSOURCE\n-------\n");
 	printf("%s\n", source);
-	#endif
-	
-	init_stream(source);
-	
-	#if COMPILE_TEST_DEBUG
 	printf("-------\nAST\n-------\n");
 	#endif
 	
 	while (token.type) {
 		Statement * stmt = parse_statement();
-		
+		compile_statement(vm, stmt);
+
 		#if COMPILE_TEST_DEBUG
 		print_statement(stmt);
 		printf("\n");
 		#endif
-		
-		compile_statement(vm, stmt);
 	}
 	ipush(((Instruction){INST_HALT}));
 

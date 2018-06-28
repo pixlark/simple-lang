@@ -15,6 +15,10 @@
 #define LEX_TEST_DEBUG       false
 #define LEX_NEXT_TOKEN_DEBUG false
 #define PARSE_INIT_DEBUG     false
+#define VM_TEST_DEBUG        false
+
+#define COMPILE_TEST_DEBUG  false
+#define CPU_STATE_REPORTING false
 
 #define u8  uint8_t
 #define u16 uint16_t
