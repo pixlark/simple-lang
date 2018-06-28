@@ -11,11 +11,15 @@ int main()
 {
 	str_intern_test();
 	map_test();
+	
 	lex_init();
 	lex_test();
-	//parse_test();
-	//ast_test();
+	
+	parse_test();
+	
 	vm_test();
+	
 	compile_test();
+	
 	return 0;
 }

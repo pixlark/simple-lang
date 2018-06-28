@@ -297,11 +297,39 @@ Statement * parse_statement()
 
 void parse_test()
 {
-	const char * source = load_string_from_file("fibonacci.sl");
+	const char * source = \
+		"if x {"
+		"    let y = 1;"
+		"    while y + 1 {"
+		"        print 15;"
+		"    };"
+		"};";
 	init_stream(source);
-	while (token.type) {
-		Statement * stmt = parse_statement();
-		print_statement(stmt);
-		printf("\n");
-	}
+		
+	Statement * if_s = parse_statement();
+	assert(if_s->type == STMT_IF);
+	assert(if_s->stmt_if.condition->type == EXPR_NAME);
+	assert(if_s->stmt_if.condition->name.name == str_intern("x"));
+
+	Statement * let_s = if_s->stmt_if.body[0];
+	assert(let_s->type == STMT_LET);
+	assert(let_s->stmt_let.bind_name == str_intern("y"));
+	assert(let_s->stmt_let.bind_val->type == EXPR_LITERAL);
+	assert(let_s->stmt_let.bind_val->literal.value == 1);
+
+	Statement * while_s = if_s->stmt_if.body[1];
+	assert(while_s->type == STMT_WHILE);
+	assert(while_s->stmt_while.condition->type == EXPR_BINARY);
+		
+	Expression * bin = while_s->stmt_while.condition;
+	assert(bin->binary.type == OP_ADD);
+	assert(bin->binary.left->type == EXPR_NAME);
+	assert(bin->binary.left->name.name == str_intern("y"));
+	assert(bin->binary.right->type == EXPR_LITERAL);
+	assert(bin->binary.right->literal.value == 1);
+
+	Statement * print_s = while_s->stmt_while.body[0];
+	assert(print_s->type == STMT_PRINT);
+	assert(print_s->stmt_print.to_print->type == EXPR_LITERAL);
+	assert(print_s->stmt_print.to_print->literal.value == 15);
 }
