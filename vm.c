@@ -62,6 +62,7 @@ Item stack_pop(Stack * stack)
 
 char * inst_to_str[] = {
 	[INST_HALT]     = "HALT",
+	[INST_PRINT]    = "PRINT",
 	[INST_OPERATOR] = "OPERATOR",
 	[INST_RESOLVE]  = "RESOLVE",
 	[INST_BIND]     = "BIND",
@@ -159,6 +160,13 @@ bool vm_step(VM * vm)
 	case INST_OPERATOR:
 		operators[inst.arg0.op_type](vm);
 		break;
+	case INST_PRINT: {
+		Item top = spop();
+		if (top.type != ITEM_LITERAL) {
+			internal_error("The VM tried to print something that's not a literal");
+		}
+		printf("%ld\n", top.literal.val);
+	} break;
 	case INST_HALT:
 		return false;
 	default:

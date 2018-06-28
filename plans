@@ -20,49 +20,6 @@ expression = factor {('+' | '-') factor}
 let = 'let' NAME '=' expression
 while = 'while' expression '{' {statement} '}'
 if = 'if' expression '{' {statement} '}'
-statement = (let|while|if) ';'
+print = 'print' expression
+statement = (let|while|if|print) ';'
 
-C repr:
-
-struct Stmt_Let {
-    char * bind_name;
-	Expression bind_val;
-};
-
-struct Stmt_While {
-    Expression condition;
-	Statement * body;
-};
-
-struct Stmt_If {
-    Expression condition;
-	Statement * body;
-};
-
-union Statement {
-    Statement_Type type;
-	union {
-        Stmt_Let   stmt_let;
-		Stmt_While stmt_while;
-		Stmt_If    stmt_if;
-    };
-};
-
-struct Expression {
-    Expr_Type type;
-	union {
-	    Operator_Type operator;
-		Expression right;
-    } unary;
-	union {
-	    Operator_Type operator;
-		Expression left;
-		Expression right;
-	} binary;
-	union {
-	    char * name;
-    } name;
-	union {
-	    u64 value;
-    } literal;
-};

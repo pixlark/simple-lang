@@ -12,6 +12,7 @@ typedef enum Stmt_Type {
 	STMT_LET,
 	STMT_WHILE,
 	STMT_IF,
+	STMT_PRINT,
 } Stmt_Type;
 
 typedef enum Expr_Type {
@@ -54,6 +55,9 @@ typedef struct Statement {
 			Expression * condition;
 			Statement ** body;
 		} stmt_if;
+		struct {
+			Expression * to_print;
+		} stmt_print;
     };
 } Statement;
 

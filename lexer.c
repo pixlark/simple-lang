@@ -18,6 +18,8 @@ void token_type_str(char * buf, Token_Type type)
 		case TOKEN_WHILE:
 			sprintf(buf, "While");
 			break;
+		case TOKEN_PRINT:
+			sprintf(buf, "Print");
 		case TOKEN_IF:
 			sprintf(buf, "If");
 			break;
@@ -54,6 +56,7 @@ const char * stream;
 const char * let_keyword;
 const char * while_keyword;
 const char * if_keyword;
+const char * print_keyword;
 
 void next_token();
 
@@ -62,10 +65,12 @@ void lex_init()
 	let_keyword = str_intern("let");
 	while_keyword = str_intern("while");
 	if_keyword = str_intern("if");
+	print_keyword = str_intern("print");
 	#if PARSE_INIT_DEBUG
 	printf("let:   %p\n", let_keyword);
 	printf("while: %p\n", while_keyword);
 	printf("if:    %p\n", if_keyword);
+	printf("print: %p\n", print_keyword);
 	#endif
 }
 
@@ -100,6 +105,8 @@ void _next_token()
 			token.type = TOKEN_WHILE;
 		} else if (token.name == if_keyword) {
 			token.type = TOKEN_IF;
+		} else if (token.name == print_keyword) {
+			token.type = TOKEN_PRINT;
 		}
 	} else {
 		switch (*stream) {
@@ -200,33 +207,13 @@ bool check_token(Token_Type type) {
 	fatal_expected(type, token.type);
 }
 
-#define _assert_token(x) \
-	assert(match_token(x))
-#define _assert_token_name(x) \
-	assert(token.name == str_intern(x) && match_token(TOKEN_NAME))
-#define _assert_token_literal(x) \
-	assert(token.literal == (x) && match_token(TOKEN_LITERAL))
-#define _assert_token_eof(x) \
-	assert(is_token(EOF))
-
-#if LEX_TEST_DEBUG
-#define assert_token(x) (print_token(token), _assert_token(x))
-#define assert_token_name(x) (print_token(token), _assert_token_name(x))
-#define assert_token_literal(x) (print_token(token), _assert_token_literal(x))
-#define assert_token_eof(x) (print_token(token), _assert_token_eof(x))
-#else
-#define assert_token _assert_token
-#define assert_token_name _assert_token_name
-#define assert_token_literal _assert_token_literal
-#define assert_token_eof _assert_token_eof
-#endif
-
 void lex_test()
 {
 	const char * source =
 		"let x = 15;\n"
 		"while x >= 0 {\n"
 		"    let x = x - 1;\n"
+		"    print x;\n"
 		"};";
 	init_stream(source);
 	assert_token(TOKEN_LET);
@@ -245,6 +232,9 @@ void lex_test()
 	assert_token_name("x");
 	assert_token('-');
 	assert_token_literal(1);
+	assert_token(';');
+	assert_token(TOKEN_PRINT);
+	assert_token_name("x");
 	assert_token(';');
 	assert_token('}');
 	assert_token(';');

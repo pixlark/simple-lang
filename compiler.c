@@ -63,6 +63,10 @@ void compile_statement(VM * vm, Statement * stmt)
 		vm->instructions[jmp_place].arg0.jmp_mark =
 			sb_count(vm->instructions);
 	} break;
+	case STMT_PRINT: {
+		compile_expression(vm, stmt->stmt_print.to_print);
+		ipush(((Instruction){INST_PRINT}));
+	} break;
 	}
 }
 
@@ -72,37 +76,51 @@ void compile_test()
 	VM * vm = &_vm;
 	vm_init(vm);
 	
-	//const char * source = "((3*4) + -2)+17*3-((8+2)*(22*1))+0";
-	//const char * source =						\
-		  //	"let x = 3;\n"
-	//	"while x > 0 { let x = x - 1; };";
 	const char * source = load_string_from_file("fibonacci.sl");
+	
+	#if COMPILE_TEST_DEBUG
 	printf("-------\nSOURCE\n-------\n");
 	printf("%s\n", source);
+	#endif
+	
 	init_stream(source);
+	
+	#if COMPILE_TEST_DEBUG
 	printf("-------\nAST\n-------\n");
+	#endif
+	
 	while (token.type) {
 		Statement * stmt = parse_statement();
+		
+		#if COMPILE_TEST_DEBUG
 		print_statement(stmt);
 		printf("\n");
+		#endif
+		
 		compile_statement(vm, stmt);
 	}
 	ipush(((Instruction){INST_HALT}));
 
+	#if COMPILE_TEST_DEBUG
 	printf("-------\nINSTRUCTIONS\n-------\n");
 	for (int i = 0; i < sb_count(vm->instructions); i++) {
 		printf("%03d ", i);
 		print_instruction(vm->instructions[i]);
 	}
+	#endif
 
 	do {
-		//vm_print_state(vm);
+		#if CPU_STATE_REPORTING
+		vm_print_state(vm);
+		#endif
 	} while (vm_step(vm));
 
+	#if COMPILE_TEST_DEBUG
 	printf("-------\nEND VARIABLE STATE\n-------\n");
 	for (int i = 0; i < 512; i++) {
 		if (vm->symbol_table->taken[i]) {
 			printf("%s = %ld\n", (char*) vm->symbol_table->keys[i], (s64) vm->symbol_table->values[i]);
 		}
 	}
+	#endif
 }

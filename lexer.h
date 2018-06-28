@@ -11,6 +11,7 @@ typedef enum Token_Type {
 	TOKEN_LET,
 	TOKEN_WHILE,
 	TOKEN_IF,
+	TOKEN_PRINT,
 	// Two-char nonterminals
 	TOKEN_EQ,
 	TOKEN_GTE,

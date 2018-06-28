@@ -35,6 +35,7 @@ Item stack_pop(Stack * stack);
 
 typedef enum Inst_Type {
 	INST_HALT,
+	INST_PRINT,
 	INST_OPERATOR,
 	INST_RESOLVE,
 	INST_BIND,

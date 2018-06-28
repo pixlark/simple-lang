@@ -103,6 +103,11 @@ void print_statement(Statement * stmt)
 		}
 		printf(")");
 		break;
+	case STMT_PRINT:
+		printf("(print ");
+		print_expression(stmt->stmt_print.to_print);
+		printf(")");
+		break;
 	}
 }
 
@@ -261,6 +266,13 @@ Statement * parse_if()
 	return stmt;
 }
 
+Statement * parse_print()
+{
+	Statement * stmt = make_stmt(STMT_PRINT);
+	stmt->stmt_print.to_print = parse_expression();
+	return stmt;
+}
+
 Statement * parse_statement()
 {
 	Statement * stmt;
@@ -273,6 +285,9 @@ Statement * parse_statement()
 	} else if (is_token(TOKEN_IF)) {
 		next_token();
 		stmt = parse_if();
+	} else if (is_token(TOKEN_PRINT)) {
+		next_token();
+		stmt = parse_print();
 	} else {
 		fatal("Not a statement");
 	}
@@ -299,8 +314,6 @@ void parse_test()
 	const char * source = load_string_from_file("fibonacci.sl");
 	init_stream(source);
 	while (token.type) {
-		//Expression * expr = parse_expression();
-		//print_expression(expr);
 		Statement * stmt = parse_statement();
 		print_statement(stmt);
 		printf("\n");
