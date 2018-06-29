@@ -138,7 +138,7 @@ bool vm_step(VM * vm)
 		}
 		u64 recieve;
 		if (!map_index(vm->symbol_table, (u64) top.variable.name, &recieve)) {
-			fatal("Name '%s' is not bound.", top.variable.name);
+			runtime_line(inst.line, "Name '%s' is not bound.", top.variable.name);
 		}
 		Item new_top;
 		new_top.type = ITEM_LITERAL;

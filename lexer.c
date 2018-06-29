@@ -51,6 +51,7 @@ void print_token(Token token)
 }
 
 Token token;
+u32 current_line = 0;
 const char * stream;
 
 Map * keyword_map;
@@ -68,11 +69,13 @@ void lex_init()
 void init_stream(const char * source)
 {
 	stream = source;
+	current_line = 0;
 	next_token();
 }
 
 void _next_token()
 {
+	token.line = current_line;
 	token.source_start = stream;
 	if (isdigit(*stream)) {
 		token.type = TOKEN_LITERAL;
@@ -97,6 +100,9 @@ void _next_token()
 		case ' ':
 		case '\t':
 		case '\n':
+			if (*stream == '\n') {
+				current_line++;
+			}
 			stream++;
 			_next_token();
 			break;
@@ -165,13 +171,13 @@ bool match_token(Token_Type type)
 	return false;
 }
 
-void fatal_expected(Token_Type expected_type, Token_Type got_type)
+void fatal_expected(Token_Type expected_type, Token got_token)
 {
 	char expected[256];
 	char got     [256];
 	token_type_str(expected, expected_type);
-	token_type_str(got,      got_type);
-	fatal("Expected token %s, got token %s", expected, got);
+	token_type_str(got,      got_token.type);
+	fatal_line(got_token.line, "Expected token %s, got token %s", expected, got);
 }
 
 /* Checks that the next token is of the expected type. If it's not,
@@ -183,12 +189,12 @@ bool expect_token(Token_Type type)
 		next_token();
 		return true;
 	}
-	fatal_expected(type, token.type);
+	fatal_expected(type, token);
 }
 
 bool check_token(Token_Type type) {
 	if (is_token(type)) return true;
-	fatal_expected(type, token.type);
+	fatal_expected(type, token);
 }
 
 #define _assert_token(x) \

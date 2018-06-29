@@ -52,6 +52,7 @@ typedef struct Instruction {
 		const char * name;
 		u32 jmp_mark;
 	} arg0;
+	u32 line;
 } Instruction;
 
 void print_instruction(Instruction inst);
@@ -60,7 +61,9 @@ void print_instruction(Instruction inst);
 #define spop()   (stack_pop(&vm->stack))
 #define spush(x) (stack_push(&vm->stack, (x)))
 
-#define ipush(x) (sb_push(vm->instructions, (x)))
+#define ipush(x, l) \
+	(sb_push(vm->instructions, (x)), \
+		sb_last(vm->instructions).line = l)
 
 typedef struct VM {
 	Map * symbol_table;

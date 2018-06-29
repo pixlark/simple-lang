@@ -54,7 +54,7 @@ int main(int argc, char ** argv)
 		printf("\n");
 		#endif
 	}
-	ipush(((Instruction){INST_HALT}));
+	ipush(((Instruction){INST_HALT}), 0);
 
 	#if DEBUG_PRINTING
 	printf("-------\nINSTRUCTIONS\n-------\n");

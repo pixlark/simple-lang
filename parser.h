@@ -56,6 +56,7 @@ typedef struct Statement {
 			Expression * to_print;
 		} stmt_print;
     };
+	u32 line;
 } Statement;
 
 typedef struct Expression {
@@ -77,10 +78,11 @@ typedef struct Expression {
 			u64 value;
 		} literal;
 	};
+	u32 line;
 } Expression;
 
-Statement * make_stmt(Stmt_Type type);
-Expression * make_expr(Expr_Type type);
+Statement * make_stmt(Stmt_Type type, u32 line);
+Expression * make_expr(Expr_Type type, u32 line);
 
 void print_statement(Statement * stmt);
 void print_expression(Expression * expr);

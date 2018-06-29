@@ -25,7 +25,7 @@ Operator_Type token_to_bin_op[] = {
 	[TOKEN_LTE] = OP_GTE,
 };
 
-Statement * make_stmt(Stmt_Type type)
+Statement * make_stmt(Stmt_Type type, u32 line)
 {
 	Statement * stmt = (Statement*) malloc(sizeof(Statement));
 	stmt->type = type;
@@ -38,12 +38,14 @@ Statement * make_stmt(Stmt_Type type)
 		stmt->stmt_if.body = NULL;
 		break;
 	}
+	stmt->line = line;
 	return stmt;
 }
 
-Expression * make_expr(Expr_Type type)
+Expression * make_expr(Expr_Type type, u32 line)
 {
 	Expression * expr = (Expression*) malloc(sizeof(Expression));
+	expr->line = line;
 	expr->type = type;
 	return expr;
 }
@@ -116,12 +118,12 @@ Expression * parse_atom()
 	Expression * expr;
 	switch (token.type) {
 	case TOKEN_LITERAL:
-		expr = make_expr(EXPR_LITERAL);
+		expr = make_expr(EXPR_LITERAL, token.line);
 		expr->literal.value = token.literal;
 		next_token();
 		break;
 	case TOKEN_NAME:
-		expr = make_expr(EXPR_NAME);
+		expr = make_expr(EXPR_NAME, token.line);
 		expr->name.name = token.name;
 		next_token();
 		break;
@@ -133,7 +135,7 @@ Expression * parse_atom()
 	default: {
 		char buf[256];
 		token_type_str(buf, token.type);
-		fatal("Token %s is not valid inside expression.", buf);
+		fatal_line(token.line, "Token %s is not valid inside expression.", buf);
 	} break;
 	}
 	return expr;
@@ -143,7 +145,7 @@ Expression * parse_expr_0()
 {
 	Expression * expr;
 	if (token.type == '-') {
-		expr = make_expr(EXPR_UNARY);
+		expr = make_expr(EXPR_UNARY, token.line);
 		expr->unary.type = OP_NEG;
 		next_token();
 		expr->unary.right = parse_expr_0();
@@ -162,7 +164,7 @@ Expression * parse_expr_1()
 {
 	Expression * left = parse_expr_0();
 	while (is_token_expr_1()) {
-		Expression * expr = make_expr(EXPR_BINARY);
+		Expression * expr = make_expr(EXPR_BINARY, token.line);
 		expr->binary.left = left;
 		expr->binary.type = token_to_bin_op[token.type];
 		next_token();
@@ -181,7 +183,7 @@ Expression * parse_expr_2()
 {
 	Expression * left = parse_expr_1();
 	while (is_token_expr_2()) {
-		Expression * expr = make_expr(EXPR_BINARY);
+		Expression * expr = make_expr(EXPR_BINARY, token.line);
 		expr->binary.left = left;
 		expr->binary.type = token_to_bin_op[token.type];
 		next_token();
@@ -205,7 +207,7 @@ Expression * parse_expr_3()
 {
 	Expression * left = parse_expr_2();
 	while (is_token_expr_3()) {
-		Expression * expr = make_expr(EXPR_BINARY);
+		Expression * expr = make_expr(EXPR_BINARY, token.line);
 		expr->binary.left = left;
 		expr->binary.type = token_to_bin_op[token.type];
 		next_token();
@@ -222,7 +224,7 @@ Expression * parse_expression()
 
 Statement * parse_let()
 {
-	Statement * stmt = make_stmt(STMT_LET);
+	Statement * stmt = make_stmt(STMT_LET, token.line);
 	check_token(TOKEN_NAME);
 	stmt->stmt_let.bind_name = token.name;
 	next_token();
@@ -232,7 +234,7 @@ Statement * parse_let()
 
 Statement * parse_while()
 {
-	Statement * stmt = make_stmt(STMT_WHILE);
+	Statement * stmt = make_stmt(STMT_WHILE, token.line);
 	stmt->stmt_while.condition = parse_expression();
 	expect_token('{');
 	while (!match_token('}')) {
@@ -243,7 +245,7 @@ Statement * parse_while()
 
 Statement * parse_if()
 {
-	Statement * stmt = make_stmt(STMT_IF);
+	Statement * stmt = make_stmt(STMT_IF, token.line);
 	stmt->stmt_if.condition = parse_expression();
 	expect_token('{');
 	while (!match_token('}')) {
@@ -254,7 +256,7 @@ Statement * parse_if()
 
 Statement * parse_print()
 {
-	Statement * stmt = make_stmt(STMT_PRINT);
+	Statement * stmt = make_stmt(STMT_PRINT, token.line);
 	stmt->stmt_print.to_print = parse_expression();
 	return stmt;
 }
@@ -275,7 +277,7 @@ Statement * parse_statement()
 		next_token();
 		stmt = parse_print();
 	} else {
-		fatal("Not a statement");
+		fatal_line(token.line, "Not a statement");
 	}
 	expect_token(';');
 	return stmt;

@@ -21,6 +21,7 @@ typedef enum Token_Type {
 
 typedef struct Token {
 	Token_Type type;
+	u32 line;
 	const char * source_start;
 	const char * source_end;
 	union {
@@ -33,6 +34,7 @@ void token_type_str(char * buf, Token_Type type);
 void print_token(Token token);
 
 extern Token token;
+extern u32 current_line;
 extern const char * stream;
 
 void lex_init();
@@ -53,6 +55,6 @@ bool match_token(Token_Type type);
 bool expect_token(Token_Type type);
 bool check_token(Token_Type type);
 
-void fatal_expected(Token_Type expected_type, Token_Type got_type);
+void fatal_expected(Token_Type expected_type, Token got_token);
 
 void lex_test();
