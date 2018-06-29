@@ -205,7 +205,7 @@ bool check_token(Token_Type type) {
 #define _assert_token_literal(x) \
 	assert(token.literal == (x) && match_token(TOKEN_LITERAL))
 #define _assert_token_eof(x) \
-	assert(is_token(EOF))
+	assert(is_token('\0'))
 
 #if LEX_TEST_DEBUG
 #define assert_token(x) (print_token(token), _assert_token(x))
@@ -221,6 +221,26 @@ bool check_token(Token_Type type) {
 
 void lex_test()
 {
+	const char * source = "round(f() + 3, digits()) * -3";
+	init_stream(source);
+	assert_token_name("round");
+	assert_token('(');
+	assert_token_name("f");
+	assert_token('(');
+	assert_token(')');
+	assert_token('+');
+	assert_token_literal(3);
+	assert_token(',');
+	assert_token_name("digits");
+	assert_token('(');
+	assert_token(')');
+	assert_token(')');
+	assert_token('*');
+	assert_token('-');
+	assert_token_literal(3);
+	assert_token_eof();
+	return;
+	#if 0
 	const char * source =
 		"let x = 15;\n"
 		"while x >= 0 {\n"
@@ -250,4 +270,5 @@ void lex_test()
 	assert_token(';');
 	assert_token('}');
 	assert_token(';');
+	#endif
 }

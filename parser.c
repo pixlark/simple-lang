@@ -366,7 +366,7 @@ Expression * parse_atom()
 		break;
 	case '(':
 		next_token();
-		//expr = parse_expression();
+		expr = parse_expression();
 		expect_token(')');
 		break;
 	default: {
@@ -392,11 +392,9 @@ Expression * parse_postfix()
 		expr->funcall.name = left;
 		if (!match_token(')')) {
 			while (1) {
-				sb_push(expr->funcall.args, parse_atom());
+				sb_push(expr->funcall.args, parse_expression());
 				if (!match_token(',')) {
-					if (!is_token(')')) {
-						fatal("Erroneous function call.");
-					}
+					expect_token(')');
 					break;
 				}
 			}
@@ -428,17 +426,54 @@ Expression * parse_bool_ops()
 	Expression * left = parse_prefix();
 	while (is_token(TOKEN_EQ) || is_token(TOKEN_GTE) || is_token(TOKEN_LTE) || is_token('<') || is_token('>')) {
 		Expression * expr = make_expr(EXPR_BINARY);
-		expr->binary.op_type = token_to_bin_op[token.type];
+		expr->binary.type = token_to_bin_op[token.type];
+		expr->binary.left = left;
 		next_token();
-		
+		expr->binary.right = parse_prefix();
+		left = expr;
 	}
+	return left;
+}
+
+Expression * parse_mul_ops()
+{
+	Expression * left = parse_bool_ops();
+	while (is_token('*') || is_token('/') || is_token('%')) {
+		Expression * expr = make_expr(EXPR_BINARY);
+		expr->binary.type = token_to_bin_op[token.type];
+		expr->binary.left = left;
+		next_token();
+		expr->binary.right = parse_bool_ops();
+		left = expr;
+	}
+	return left;
+}
+
+Expression * parse_add_ops()
+{
+	Expression * left = parse_mul_ops();
+	while (is_token('+') || is_token('-')) {
+		Expression * expr = make_expr(EXPR_BINARY);
+		expr->binary.type = token_to_bin_op[token.type];
+		expr->binary.left = left;
+		next_token();
+		expr->binary.right = parse_mul_ops();
+		left = expr;
+	}
+	return left;
+}
+
+Expression * parse_expression()
+{
+	return parse_add_ops();
 }
 
 void parse_test()
 {
-	const char * source = "!-f(0)";
+	const char * source = "round(f() + 3, digits()) * -3";
+	printf("%s\n", source);
 	init_stream(source);
-	Expression * expr = parse_prefix();
+	Expression * expr = parse_expression();
 	print_expression(expr);
 	printf("\n");
 }

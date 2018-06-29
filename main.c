@@ -10,6 +10,7 @@
 int main(int argc, char ** argv)
 {
 	lex_init();
+	lex_test();
 	parse_test();
 	
 	#if 0
