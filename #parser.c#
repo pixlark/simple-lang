@@ -430,7 +430,8 @@ Expression * parse_bool_ops()
 		Expression * expr = make_expr(EXPR_BINARY);
 		expr->binary.op_type = token_to_bin_op[token.type];
 		next_token();
-		
+		expr->binary.left = left;
+		expr->binary.right = parse_
 	}
 }
 

@@ -1,15 +1,58 @@
-1 + 3;
 
-let y = 3;
-let x = (y + 3);
 
-while x {
-    let x = x - 1;
-};
 
-if x {
-   let y = 100;
-};
+
+
+
+
+
+NEW EBNF:
+# Expression
+atom   = INT
+	   | NAME
+       | '(' expression ')'
+funcall   = {expression ','} [expression] ')'
+postfix   = atom [('[' expression ']' | '(' funcall)]
+prefix    = [('-'|'!')] prefix | postfix
+bool_ops  = prefix [('=='|'!='|'<='|'>='|'<'|'>') prefix]
+mul_ops   = bool_ops [('*'|'/'|'%') bool_ops]
+add_ops   = add_ops [('+'|'-') add_ops]
+expression = add_ops
+
+# Statement
+lone_expr = expression ';'
+
+# Declaration
+declaration = 'let' NAME '=' expression ';'
+
+# Function declaration
+func_decl = 'func' NAME arg_list scope
+
+# If/Elif/Else
+if_statement = 'if' expression scope {'elif' expression scope} ['else' scope]
+
+# While
+while_statement = 'while' expression scope
+
+# Scope
+statement = lone_expr
+		  | declaration
+		  | if_statement
+		  | while_statement
+		  | scope
+scope = '{' {statement} '}'
+
+
+
+
+
+
+
+
+
+
+
+--------------
 
 EBNF:
 

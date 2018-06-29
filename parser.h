@@ -12,6 +12,8 @@ typedef enum Stmt_Type {
 typedef enum Expr_Type {
 	EXPR_UNARY,
 	EXPR_BINARY,
+	EXPR_INDEX,
+	EXPR_FUNCALL,
 	EXPR_NAME,
 	EXPR_LITERAL,
 } Expr_Type;
@@ -19,6 +21,7 @@ typedef enum Expr_Type {
 typedef enum Operator_Type {
 	// Unary
 	OP_NEG = 0,
+	OP_LNEG,
 	// Binary
 	OP_ADD,
 	OP_SUB,
@@ -62,6 +65,11 @@ typedef struct Statement {
 	u32 line;
 } Statement;
 
+typedef struct Arg_List {
+	Expression ** args;
+	u32 arg_count;
+} Arg_List;
+
 typedef struct Expression {
     Expr_Type type;
 	union {
@@ -69,6 +77,14 @@ typedef struct Expression {
 			Operator_Type type;
 			Expression * right;
 		} unary;
+		struct {
+			Expression * left;
+			Expression * right;
+		} index;
+		struct {
+			Expression * name;
+			Expression ** args;
+		} funcall;
 		struct {
 			Operator_Type type;
 			Expression * left;
@@ -84,8 +100,8 @@ typedef struct Expression {
 	u32 line;
 } Expression;
 
-Statement * make_stmt(Stmt_Type type, u32 line);
-Expression * make_expr(Expr_Type type, u32 line);
+Statement * make_stmt(Stmt_Type type);
+Expression * make_expr(Expr_Type type);
 
 void print_statement(Statement * stmt);
 void print_expression(Expression * expr);

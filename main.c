@@ -1,14 +1,18 @@
 #include "common.h"
-#include "compiler.h"
+//#include "compiler.h"
 #include "error.h"
 #include "intern.h"
 #include "lexer.h"
 #include "map.h"
 #include "parser.h"
-#include "vm.h"
+//#include "vm.h"
 
 int main(int argc, char ** argv)
 {
+	lex_init();
+	parse_test();
+	
+	#if 0
 	/*
 	 * Initialization
 	 */
@@ -80,4 +84,5 @@ int main(int argc, char ** argv)
 	#endif
 	
 	return 0;
+	#endif
 }
