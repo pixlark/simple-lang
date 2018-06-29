@@ -1,2 +1,1 @@
-
-print x;
+print 15 % 3;

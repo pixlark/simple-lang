@@ -51,6 +51,8 @@ typedef struct Statement {
 		struct {
 			Expression * condition;
 			Statement ** body;
+			bool has_else;
+			Statement ** else_body;
 		} stmt_if;
 		struct {
 			Expression * to_print;

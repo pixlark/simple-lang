@@ -53,14 +53,50 @@ void compile_statement(VM * vm, Statement * stmt)
 			sb_count(vm->instructions);
 	} break;
 	case STMT_IF: {
+		/* Without else:
+		 * 0 CONDITION
+		 * 1 JZ 4
+		 * 2 BODY
+		 * 3 JMP 4
+		 * 4 ...
+		 */
+		/* With else:
+		 * 0 CONDITION
+		 * 1 JZ 4
+		 * 2 BODY
+		 * 3 JMP 5
+		 * 4 ELSE_BODY
+		 * 5 ...
+		 */
 		compile_expression(vm, stmt->stmt_if.condition);
-		u32 jmp_place = sb_count(vm->instructions);
+		// If else is triggered, this jump is followed
+		u32 jz_place = sb_count(vm->instructions);
 		ipush(((Instruction){INST_JZ}), stmt->line);
-		assert(vm->instructions[jmp_place].type == INST_JZ);
+		assert(vm->instructions[jz_place].type == INST_JZ);
+
+		// Compile body
 		for (int i = 0; i < sb_count(stmt->stmt_if.body); i++) {
 			compile_statement(vm, stmt->stmt_if.body[i]);
 		}
-		vm->instructions[jmp_place].arg0.jmp_mark =
+
+		// If main condition is triggered, this jump is followed after
+		// execution of body
+		u32 jump_place = sb_count(vm->instructions);
+		ipush(((Instruction){INST_JUMP}), stmt->line);
+		assert(vm->instructions[jump_place].type == INST_JUMP);
+
+		// This is where else jumps to
+		vm->instructions[jz_place].arg0.jmp_mark =
+			sb_count(vm->instructions);
+		
+		if (stmt->stmt_if.has_else) {
+			for (int i = 0; i < sb_count(stmt->stmt_if.else_body); i++) {
+				compile_statement(vm, stmt->stmt_if.else_body[i]);
+			}
+		}
+
+		// This is where main condition jumps to after body
+		vm->instructions[jump_place].arg0.jmp_mark =
 			sb_count(vm->instructions);
 	} break;
 	case STMT_PRINT: {

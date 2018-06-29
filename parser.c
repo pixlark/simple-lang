@@ -36,6 +36,7 @@ Statement * make_stmt(Stmt_Type type, u32 line)
 		break;
 	case STMT_IF:
 		stmt->stmt_if.body = NULL;
+		stmt->stmt_if.else_body = NULL;
 		break;
 	}
 	stmt->line = line;
@@ -250,6 +251,15 @@ Statement * parse_if()
 	expect_token('{');
 	while (!match_token('}')) {
 		sb_push(stmt->stmt_if.body, parse_statement());
+	}
+	if (match_token(TOKEN_ELSE)) {
+		stmt->stmt_if.has_else = true;
+		expect_token('{');
+		while (!match_token('}')) {
+			sb_push(stmt->stmt_if.else_body, parse_statement());
+		}
+	} else {
+		stmt->stmt_if.has_else = false;
 	}
 	return stmt;
 }

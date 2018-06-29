@@ -19,7 +19,6 @@ factor = unary {('*' | '/') unary}
 expression = factor {('+' | '-') factor}
 let = 'let' NAME '=' expression
 while = 'while' expression '{' {statement} '}'
-if = 'if' expression '{' {statement} '}'
+if = 'if' expression '{' {statement} '}' ['else' '{' {statement} '}']
 print = 'print' expression
 statement = (let|while|if|print) ';'
-

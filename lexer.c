@@ -63,6 +63,7 @@ void lex_init()
 	map_insert(keyword_map, (u64) str_intern("let"),   (u64) TOKEN_LET);
 	map_insert(keyword_map, (u64) str_intern("while"), (u64) TOKEN_WHILE);
 	map_insert(keyword_map, (u64) str_intern("if"),    (u64) TOKEN_IF);
+	map_insert(keyword_map, (u64) str_intern("else"),  (u64) TOKEN_ELSE);
 	map_insert(keyword_map, (u64) str_intern("print"), (u64) TOKEN_PRINT);
 }
 
