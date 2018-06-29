@@ -220,6 +220,7 @@ void operator_add(VM * vm) { BINARY_OPERATOR(+);  }
 void operator_sub(VM * vm) { BINARY_OPERATOR(-);  }
 void operator_mul(VM * vm) { BINARY_OPERATOR(*);  }
 void operator_div(VM * vm) { BINARY_OPERATOR(/);  }
+void operator_mod(VM * vm) { BINARY_OPERATOR(%);  }
 void operator_eq (VM * vm) { BINARY_OPERATOR(==); }
 void operator_gt (VM * vm) { BINARY_OPERATOR(>);  }
 void operator_lt (VM * vm) { BINARY_OPERATOR(<);  }
@@ -232,6 +233,7 @@ void (*operators[])(VM*) = {
 	[OP_SUB] = operator_sub,
 	[OP_MUL] = operator_mul,
 	[OP_DIV] = operator_div,
+	[OP_MOD] = operator_mod,
 	[OP_EQ]  = operator_eq,
 	[OP_GT]  = operator_gt,
 	[OP_LT]  = operator_lt,

@@ -120,7 +120,7 @@ void _next_token()
 			stream++;
 			if (*stream == '=') {
 				stream++;
-				token.type = TOKEN_GTE;
+				token.type = TOKEN_LTE;
 			} else {
 				token.type = '<';
 			}

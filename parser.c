@@ -6,6 +6,7 @@ char * op_to_str[] = {
 	[OP_SUB] = "-",
 	[OP_MUL] = "*",
 	[OP_DIV] = "/",
+	[OP_MOD] = "%",
 	[OP_EQ]  = "==",
 	[OP_GT]  = ">",
 	[OP_LT]  = "<",
@@ -18,11 +19,12 @@ Operator_Type token_to_bin_op[] = {
 	['-']       = OP_SUB,
 	['*']       = OP_MUL,
 	['/']       = OP_DIV,
+	['%']       = OP_MOD,
 	[TOKEN_EQ]  = OP_EQ,
 	['>']       = OP_GT,
 	['<']       = OP_LT,
 	[TOKEN_GTE] = OP_GTE,
-	[TOKEN_LTE] = OP_GTE,
+	[TOKEN_LTE] = OP_LTE,
 };
 
 Statement * make_stmt(Stmt_Type type, u32 line)
@@ -158,7 +160,7 @@ Expression * parse_expr_0()
 
 bool is_token_expr_1()
 {
-	return is_token('*') || is_token('/');
+	return is_token('*') || is_token('/') || is_token('%');
 }
 
 Expression * parse_expr_1()
