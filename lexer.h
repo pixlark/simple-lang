@@ -10,10 +10,12 @@ typedef enum Token_Type {
 	TOKEN_LITERAL = 128,
 	TOKEN_NAME,
 	TOKEN_LET,
+	TOKEN_SET,
 	TOKEN_WHILE,
 	TOKEN_IF,
+	TOKEN_ELIF,
 	TOKEN_ELSE,
-	TOKEN_PRINT,
+	TOKEN_FUNC,
 	// Two-char nonterminals
 	TOKEN_EQ,
 	TOKEN_GTE,

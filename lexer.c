@@ -13,15 +13,22 @@ void token_type_str(char * buf, Token_Type type)
 			sprintf(buf, "Name");
 			break;
 		case TOKEN_LET:
-			sprintf(buf, "Let");
+			sprintf(buf, "let");
 			break;
 		case TOKEN_WHILE:
-			sprintf(buf, "While");
+			sprintf(buf, "while");
 			break;
-		case TOKEN_PRINT:
-			sprintf(buf, "Print");
 		case TOKEN_IF:
-			sprintf(buf, "If");
+			sprintf(buf, "if");
+			break;
+		case TOKEN_ELIF:
+			sprintf(buf, "elif");
+			break;
+		case TOKEN_ELSE:
+			sprintf(buf, "else");
+			break;
+		case TOKEN_FUNC:
+			sprintf(buf, "func");
 			break;
 		case TOKEN_GTE:
 			sprintf(buf, ">=");
@@ -61,10 +68,12 @@ void lex_init()
 	keyword_map = make_map(16);
 
 	map_insert(keyword_map, (u64) str_intern("let"),   (u64) TOKEN_LET);
+	map_insert(keyword_map, (u64) str_intern("set"),   (u64) TOKEN_SET);
 	map_insert(keyword_map, (u64) str_intern("while"), (u64) TOKEN_WHILE);
 	map_insert(keyword_map, (u64) str_intern("if"),    (u64) TOKEN_IF);
+	map_insert(keyword_map, (u64) str_intern("elif"),  (u64) TOKEN_ELIF);
 	map_insert(keyword_map, (u64) str_intern("else"),  (u64) TOKEN_ELSE);
-	map_insert(keyword_map, (u64) str_intern("print"), (u64) TOKEN_PRINT);
+	map_insert(keyword_map, (u64) str_intern("func"),  (u64) TOKEN_FUNC);	
 }
 
 void init_stream(const char * source)
@@ -240,35 +249,4 @@ void lex_test()
 	assert_token_literal(3);
 	assert_token_eof();
 	return;
-	#if 0
-	const char * source =
-		"let x = 15;\n"
-		"while x >= 0 {\n"
-		"    let x = x - 1;\n"
-		"    print x;\n"
-		"};";
-	init_stream(source);
-	assert_token(TOKEN_LET);
-	assert_token_name("x");
-	assert_token('=');
-	assert_token_literal(15);
-	assert_token(';');
-	assert_token(TOKEN_WHILE);
-	assert_token_name("x");
-	assert_token(TOKEN_GTE);
-	assert_token_literal(0);
-	assert_token('{');
-	assert_token(TOKEN_LET);
-	assert_token_name("x");
-	assert_token('=');
-	assert_token_name("x");
-	assert_token('-');
-	assert_token_literal(1);
-	assert_token(';');
-	assert_token(TOKEN_PRINT);
-	assert_token_name("x");
-	assert_token(';');
-	assert_token('}');
-	assert_token(';');
-	#endif
 }

@@ -19,8 +19,11 @@ mul_ops   = bool_ops [('*'|'/'|'%') bool_ops]
 add_ops   = add_ops [('+'|'-') add_ops]
 expression = add_ops
 
+# Lone Expression Statement
+lone_expr = expression ';'
+
 # Assignment
-assignment = expression '=' expression ';'
+assignment = 'set' expression '=' expression ';'
 
 # Declaration
 declaration = 'let' NAME '=' expression ';'
@@ -33,6 +36,7 @@ while_statement = 'while' expression scope
 
 # Scope
 statement = lone_expr
+		  | assignment
 		  | declaration
 		  | if_statement
 		  | while_statement

@@ -4,6 +4,7 @@
 
 typedef enum Stmt_Type {
 	STMT_EXPR,
+	STMT_ASSIGN,
 	STMT_DECL,
 	STMT_IF,
 	STMT_WHILE,
@@ -41,35 +42,36 @@ extern Operator_Type token_to_bin_op[];
 
 typedef struct Statement  Statement;
 typedef struct Expression Expression;
+typedef struct Function   Function;
 
-typedef struct Condition_Body {
-	Expression * condition;
-	Statement ** body;
-} Condition_Body;
+typedef struct Function {
+	const char * name;
+	const char ** arg_names;
+	Statement * body;
+} Function;
 
 typedef struct Statement {
 	Stmt_Type type;
-	/*
-	    STMT_EXPR
-		STMT_DECL
-		STMT_IF
-		STMT_WHILE
-		STMT_SCOPE
-	*/
 	union {
 		struct {
 			Expression * expr;
 		} stmt_expr;
 		struct {
+			Expression * left;
+			Expression * right;
+		} stmt_assign;
+		struct {
 			const char * bind_name;
 			Expression * bind_expr;
 		} stmt_decl;
 		struct {
-			Condition_Body ** if_cbs;
-			Statement ** else_body;
+			Expression ** conditions;
+			Statement ** scopes;
+			Statement * else_scope;
 		} stmt_if;
 		struct {
-			Condition_Body * cb;
+			Expression * condition;
+			Statement * scope;
 		} stmt_while;
 		struct {
 			Statement ** body;
@@ -77,11 +79,6 @@ typedef struct Statement {
     };
 	u32 line;
 } Statement;
-
-typedef struct Arg_List {
-	Expression ** args;
-	u32 arg_count;
-} Arg_List;
 
 typedef struct Expression {
     Expr_Type type;
@@ -129,14 +126,18 @@ void print_expression(Expression * expr);
  */
 
 Expression * parse_atom();
-Expression * parse_expr_0();
-Expression * parse_expr_1();
-Expression * parse_expr_2();
+Expression * parse_postfix();
+Expression * parse_prefix();
+Expression * parse_bool_ops();
+Expression * parse_mul_ops();
+Expression * parse_add_ops();
 Expression * parse_expression();
-Statement  * parse_let();
-Statement  * parse_while();
-Statement  * parse_if();
-Statement  * parse_print();
-Statement  * parse_statement();
+
+Statement * parse_lone_expr();
+Statement * parse_assign();
+Statement * parse_decl();
+Statement * parse_if();
+Statement * parse_scope();
+Statement * parse_statement();
 
 void parse_test();

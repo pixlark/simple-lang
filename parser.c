@@ -300,14 +300,16 @@ Statement * parse_statement()
 
 Expression * make_expr(Expr_Type type)
 {
-	Expression * expr = (Expression*) malloc(sizeof(Expression));
-	switch (type) {
-	case EXPR_FUNCALL:
-		expr->funcall.args = 0;
-		break;
-	}
+	Expression * expr = (Expression*) calloc(1, sizeof(Expression));
 	expr->type = type;
 	return expr;
+}
+
+Statement * make_stmt(Stmt_Type type)
+{
+	Statement * stmt = (Statement*) calloc(1, sizeof(Statement));
+	stmt->type = type;
+	return stmt;
 }
 
 void print_expression(Expression * expr)
@@ -350,6 +352,68 @@ void print_expression(Expression * expr)
 	}
 }
 
+void print_statement(Statement * stmt)
+{
+	switch (stmt->type) {
+	case STMT_EXPR:
+		print_expression(stmt->stmt_expr.expr);
+		break;
+	case STMT_ASSIGN:
+		printf("(set ");
+		print_expression(stmt->stmt_assign.left);
+		printf(" ");
+		print_expression(stmt->stmt_assign.right);
+		printf(")");
+		break;
+	case STMT_DECL:
+		printf("(let %s ", stmt->stmt_decl.bind_name);
+		print_expression(stmt->stmt_decl.bind_expr);
+		printf(")");
+		break;
+	case STMT_IF:
+		printf("(");
+		assert(sb_count(stmt->stmt_if.conditions) == sb_count(stmt->stmt_if.scopes));
+		for (int i = 0; i < sb_count(stmt->stmt_if.conditions); i++) {
+			printf("%s ", i == 0 ? "if" : " elif");
+			print_expression(stmt->stmt_if.conditions[i]);
+			printf(" then ");
+			print_statement(stmt->stmt_if.scopes[i]);
+		}
+		if (stmt->stmt_if.else_scope) {
+			printf(" else ");
+			print_statement(stmt->stmt_if.else_scope);
+		}
+		printf(")");
+		break;
+	case STMT_WHILE:
+		printf("(while ");
+		print_expression(stmt->stmt_while.condition);
+		printf(" ");
+		print_statement(stmt->stmt_while.scope);
+		printf(")");
+		break;
+	case STMT_SCOPE:
+		printf("(");
+		for (int i = 0; i < sb_count(stmt->stmt_scope.body); i++) {
+			print_statement(stmt->stmt_scope.body[i]);
+			if (i != sb_count(stmt->stmt_scope.body) - 1) printf(" ");
+		}
+		printf(")");
+		break;
+	}
+}
+
+void print_function(Function * func)
+{
+	printf("(defun %s (", func->name);
+	for (int i = 0; i < sb_count(func->arg_names); i++) {
+		printf("%s%s", func->arg_names[i], i != sb_count(func->arg_names) - 1 ? " " : "");
+	}
+	printf(") ");
+	print_statement(func->body);
+	printf(")");
+}
+
 Expression * parse_atom()
 {
 	Expression * expr;
@@ -378,6 +442,22 @@ Expression * parse_atom()
 	return expr;
 }
 
+// NOTE: Leading ( has already been consumed when calling this
+Expression ** parse_arglist()
+{
+	Expression ** arglist = 0;
+	if (!match_token(')')) {
+		while (1) {
+			sb_push(arglist, parse_expression());
+			if (!match_token(',')) {
+				expect_token(')');
+				break;
+			}
+		}
+	}
+	return arglist;
+}
+
 Expression * parse_postfix()
 {
 	Expression * left = parse_atom();
@@ -390,15 +470,7 @@ Expression * parse_postfix()
 	} else if (match_token('(')) {
 		Expression * expr = make_expr(EXPR_FUNCALL);
 		expr->funcall.name = left;
-		if (!match_token(')')) {
-			while (1) {
-				sb_push(expr->funcall.args, parse_expression());
-				if (!match_token(',')) {
-					expect_token(')');
-					break;
-				}
-			}
-		}
+		expr->funcall.args = parse_arglist();
 		left = expr;
 	}
 	return left;
@@ -468,53 +540,148 @@ Expression * parse_expression()
 	return parse_add_ops();
 }
 
-void parse_test()
+Statement * parse_lone_expr()
 {
-	const char * source = "round(f() + 3, digits()) * -3";
-	printf("%s\n", source);
-	init_stream(source);
-	Expression * expr = parse_expression();
-	print_expression(expr);
-	printf("\n");
+	Statement * stmt = make_stmt(STMT_EXPR);
+	stmt->stmt_expr.expr = parse_expression();
+	expect_token(';');
+	return stmt;
 }
 
-#if 0
+Statement * parse_assign()
+{
+	expect_token(TOKEN_SET);
+	Statement * stmt = make_stmt(STMT_ASSIGN);
+	stmt->stmt_assign.left = parse_expression();
+	expect_token('=');
+	stmt->stmt_assign.right = parse_expression();
+	expect_token(';');
+	return stmt;
+}
+
+Statement * parse_decl()
+{
+	expect_token(TOKEN_LET);
+	Statement * stmt = make_stmt(STMT_DECL);
+	check_token(TOKEN_NAME);
+	stmt->stmt_decl.bind_name = token.name;
+	next_token();
+	expect_token('=');
+	stmt->stmt_decl.bind_expr = parse_expression();
+	expect_token(';');
+	return stmt;
+}
+
+Statement * parse_if()
+{
+	expect_token(TOKEN_IF);
+	Statement * stmt = make_stmt(STMT_IF);
+	do {
+		sb_push(stmt->stmt_if.conditions, parse_expression());
+		sb_push(stmt->stmt_if.scopes,     parse_scope());
+	} while (match_token(TOKEN_ELIF));
+	if (match_token(TOKEN_ELSE)) {
+		stmt->stmt_if.else_scope = parse_scope();
+	}
+	return stmt;
+}
+
+Statement * parse_while()
+{
+	expect_token(TOKEN_WHILE);
+	Statement * stmt = make_stmt(STMT_WHILE);
+	stmt->stmt_while.condition = parse_expression();
+	stmt->stmt_while.scope = parse_scope();
+	return stmt;
+}
+
+Statement * parse_scope()
+{
+	expect_token('{');
+	Statement * stmt = make_stmt(STMT_SCOPE);
+	while (!match_token('}')) {
+		sb_push(stmt->stmt_scope.body, parse_statement());
+	}
+	return stmt;
+}
+
+Statement * parse_statement()
+{
+	switch (token.type) {
+	case TOKEN_SET:
+		return parse_assign();
+		break;
+	case TOKEN_LET:
+		return parse_decl();
+		break;
+	case TOKEN_IF:
+		return parse_if();
+		break;
+	case TOKEN_ELIF:
+		fatal("elif outside of if chain");
+		break;
+	case TOKEN_ELSE:
+		fatal("else outside of if chain");
+		break;
+	case TOKEN_WHILE:
+		return parse_while();
+		break;
+	case '{':
+		return parse_scope();
+		break;
+	default:
+		return parse_lone_expr();
+		break;
+	}
+}
+
+Function * parse_function()
+{
+	Function * func = calloc(1, sizeof(Function));
+	expect_token(TOKEN_FUNC);
+	check_token(TOKEN_NAME);
+	func->name = token.name;
+	next_token();
+	expect_token('(');
+	Expression ** arglist = 0;
+	if (!match_token(')')) {
+		check_token(TOKEN_NAME);
+		while (1) {
+			sb_push(func->arg_names, token.name);
+			next_token();
+			if (!match_token(',')) {
+				expect_token(')');
+				break;
+			}
+		}
+	}
+	func->body = parse_scope();
+}
+
 void parse_test()
 {
-	const char * source = \
-		"if x {"
-		"    let y = 1;"
-		"    while y + 1 {"
-		"        print 15;"
-		"    };"
-		"};";
+	//const char * source = "round(f() + 3, digits()) * -3;";
+	//const char * source = "{let arr = new_arr(5); set arr[2] = 3;}";
+	//const char * source = "if x == 2 { f(); } else { g(); }";
+	const char * source =
+		"func fib(count) {\n"
+		"    let a = 0;\n"
+		"    let b = 1;\n"
+		"    let i = 0;\n"
+		"    print(a);\n"
+		"    while i < count {\n"
+		"        set tmp = b;\n"
+		"        set b = a + b;\n"
+		"        set a = tmp;\n"
+		"        print(b);\n"
+		"        set i = i + 1;\n"
+		"    }\n"
+		"}\n";
+	printf("%s\n\n", source);
 	init_stream(source);
-		
-	Statement * if_s = parse_statement();
-	assert(if_s->type == STMT_IF);
-	assert(if_s->stmt_if.condition->type == EXPR_NAME);
-	assert(if_s->stmt_if.condition->name.name == str_intern("x"));
-
-	Statement * let_s = if_s->stmt_if.body[0];
-	assert(let_s->type == STMT_LET);
-	assert(let_s->stmt_let.bind_name == str_intern("y"));
-	assert(let_s->stmt_let.bind_val->type == EXPR_LITERAL);
-	assert(let_s->stmt_let.bind_val->literal.value == 1);
-
-	Statement * while_s = if_s->stmt_if.body[1];
-	assert(while_s->type == STMT_WHILE);
-	assert(while_s->stmt_while.condition->type == EXPR_BINARY);
-	
-	Expression * bin = while_s->stmt_while.condition;
-	assert(bin->binary.type == OP_ADD);
-	assert(bin->binary.left->type == EXPR_NAME);
-	assert(bin->binary.left->name.name == str_intern("y"));
-	assert(bin->binary.right->type == EXPR_LITERAL);
-	assert(bin->binary.right->literal.value == 1);
-
-	Statement * print_s = while_s->stmt_while.body[0];
-	assert(print_s->type == STMT_PRINT);
-	assert(print_s->stmt_print.to_print->type == EXPR_LITERAL);
-	assert(print_s->stmt_print.to_print->literal.value == 15);
+	while (!is_token(0)) {
+		Function * func = parse_function();
+		print_function(func);
+		printf("\n");
+	}
 }
-#endif
