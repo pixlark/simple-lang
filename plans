@@ -19,14 +19,11 @@ mul_ops   = bool_ops [('*'|'/'|'%') bool_ops]
 add_ops   = add_ops [('+'|'-') add_ops]
 expression = add_ops
 
-# Statement
-lone_expr = expression ';'
+# Assignment
+assignment = expression '=' expression ';'
 
 # Declaration
 declaration = 'let' NAME '=' expression ';'
-
-# Function declaration
-func_decl = 'func' NAME arg_list scope
 
 # If/Elif/Else
 if_statement = 'if' expression scope {'elif' expression scope} ['else' scope]
@@ -42,8 +39,10 @@ statement = lone_expr
 		  | scope
 scope = '{' {statement} '}'
 
+# Function declaration
+func_decl = 'func' NAME arg_list scope
 
-
+file = {func_decl}
 
 
 

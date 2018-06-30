@@ -3,10 +3,11 @@
 #include "error.h"
 
 typedef enum Stmt_Type {
-	STMT_LET,
-	STMT_WHILE,
+	STMT_EXPR,
+	STMT_DECL,
 	STMT_IF,
-	STMT_PRINT,
+	STMT_WHILE,
+	STMT_SCOPE,
 } Stmt_Type;
 
 typedef enum Expr_Type {
@@ -41,26 +42,38 @@ extern Operator_Type token_to_bin_op[];
 typedef struct Statement  Statement;
 typedef struct Expression Expression;
 
+typedef struct Condition_Body {
+	Expression * condition;
+	Statement ** body;
+} Condition_Body;
+
 typedef struct Statement {
-    Stmt_Type type;
+	Stmt_Type type;
+	/*
+	    STMT_EXPR
+		STMT_DECL
+		STMT_IF
+		STMT_WHILE
+		STMT_SCOPE
+	*/
 	union {
 		struct {
+			Expression * expr;
+		} stmt_expr;
+		struct {
 			const char * bind_name;
-			Expression * bind_val;
-		} stmt_let;
+			Expression * bind_expr;
+		} stmt_decl;
 		struct {
-			Expression * condition;
-			Statement ** body;
-		} stmt_while;
-		struct {
-			Expression * condition;
-			Statement ** body;
-			bool has_else;
+			Condition_Body ** if_cbs;
 			Statement ** else_body;
 		} stmt_if;
 		struct {
-			Expression * to_print;
-		} stmt_print;
+			Condition_Body * cb;
+		} stmt_while;
+		struct {
+			Statement ** body;
+		} stmt_scope;
     };
 	u32 line;
 } Statement;
