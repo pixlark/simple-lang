@@ -2,6 +2,7 @@
 
 #include "lexer.h"
 
+#if 0
 void compile_expression(VM * vm, Expression * expr)
 {
 	switch (expr->type) {
@@ -104,4 +105,10 @@ void compile_statement(VM * vm, Statement * stmt)
 		ipush(((Instruction){INST_PRINT}), stmt->line);
 	} break;
 	}
+}
+#endif
+
+void decl_pass(Function * function)
+{
+	
 }
