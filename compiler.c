@@ -108,7 +108,7 @@ void compile_statement(VM * vm, Statement * stmt)
 }
 #endif
 
-void decl_pass(Function * function)
+Declaration * read_declarations(Function * function)
 {
 	
 }

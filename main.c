@@ -10,8 +10,27 @@
 int main(int argc, char ** argv)
 {
 	lex_init();
+	
+	str_intern_test();
+	map_test();
+	
 	lex_test();
-	parse_test();
+	//parse_test();
+
+	if (argc < 2) {
+		printf("Need a file to interpret.\n");
+		return 1;
+	} else if (argc > 2) {
+		printf("Provide one file to interpret.\n");
+		return 1;
+	}
+	
+	const char * source = load_string_from_file(argv[1]);
+	init_stream(source);
+	
+	while (token.type) {
+		Function * func = parse_function();
+	}
 	
 	#if 0
 	/*

@@ -132,12 +132,15 @@ Expression * parse_bool_ops();
 Expression * parse_mul_ops();
 Expression * parse_add_ops();
 Expression * parse_expression();
-
+Statement * parse_while();
 Statement * parse_lone_expr();
 Statement * parse_assign();
 Statement * parse_decl();
 Statement * parse_if();
+
 Statement * parse_scope();
 Statement * parse_statement();
+
+Function * parse_function();
 
 void parse_test();
