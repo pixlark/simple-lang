@@ -26,7 +26,7 @@ lone_expr = expression ';'
 assignment = 'set' expression '=' expression ';'
 
 # Declaration
-declaration = 'let' NAME '=' expression ';'
+declaration = 'let' NAME ';'
 
 # If/Elif/Else
 if_statement = 'if' expression scope {'elif' expression scope} ['else' scope]
@@ -67,10 +67,10 @@ The current SP is saved, and the arguments are pushed to the call stack
 The function is looked up in a table to determine it's
 declarations. These are pushed onto the call stack in order.
  # func function(a, b) {
- #     let c = 1;
- #     let d = 2;
+ #     let c;
+ #     let d;
  # }
- # [..., 5, 10, DEADBEEF, DEADBEEF]
+ # [..., 5, 10, 0xDEADBEEF, 0xDEADBEEF]
 Each statement in the body is compiled. When a variable is encountered
 in an expression, a LOAD instruction loads the variable from a
 callstack offset into the operator stack.

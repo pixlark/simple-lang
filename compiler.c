@@ -108,7 +108,16 @@ void compile_statement(VM * vm, Statement * stmt)
 }
 #endif
 
-Declaration * read_declarations(Function * function)
+Declaration * read_declarations(Function * func)
 {
-	
+	Declaration * decls = 0;
+	for (int i = 0; i < sb_count(func->body->stmt_scope.body); i++) {
+		Statement * stmt = func->body->stmt_scope.body[i];
+		if (stmt->type != STMT_DECL) continue;
+		Declaration decl;
+		decl.name = stmt->stmt_decl.name;
+		decl.size = sizeof(u64); // No types at the moment
+		sb_push(decls, decl);
+	}
+	return decls;
 }

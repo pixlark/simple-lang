@@ -1,5 +1,6 @@
 #pragma once
 #include "lexer.h"
+#include "compiler.h"
 #include "error.h"
 
 typedef enum Stmt_Type {
@@ -40,6 +41,10 @@ typedef enum Operator_Type {
 extern char * op_to_str[];
 extern Operator_Type token_to_bin_op[];
 
+// From compiler.h
+typedef struct Declaration Declaration;
+//
+
 typedef struct Statement  Statement;
 typedef struct Expression Expression;
 typedef struct Function   Function;
@@ -48,6 +53,7 @@ typedef struct Function {
 	const char * name;
 	const char ** arg_names;
 	Statement * body;
+	Declaration * decls;
 } Function;
 
 typedef struct Statement {
@@ -61,8 +67,8 @@ typedef struct Statement {
 			Expression * right;
 		} stmt_assign;
 		struct {
-			const char * bind_name;
-			Expression * bind_expr;
+			const char * name;
+			//Expression * bind_expr;
 		} stmt_decl;
 		struct {
 			Expression ** conditions;

@@ -46,6 +46,14 @@ bool map_index(Map * map, u64 key, u64 * value)
 	return true;
 }
 
+int map_iter(Map * map, int iter)
+{
+	while (!map->taken[++iter]) {
+		if (iter >= map->size) return -1;
+	}
+	return iter;
+}
+
 void map_test()
 {
 	Map * map = make_map(512);

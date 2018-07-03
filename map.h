@@ -17,4 +17,5 @@ Map * make_map(size_t size);
 u64 map_hash(Map * map, u64 key);
 void map_insert(Map * map, u64 key, u64 value);
 bool map_index(Map * map, u64 key, u64 * value);
+int map_iter(Map * map, int iter);
 void map_test();

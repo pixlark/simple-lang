@@ -4,6 +4,10 @@
 //#include "vm.h"
 #include "parser.h"
 
+// From parser.h
+typedef struct Function Function;
+//
+
 typedef struct Declaration {
 	const char * name;
 	size_t size;
@@ -13,3 +17,5 @@ typedef struct Declaration {
 void compile_expression(VM * vm, Expression * expression);
 void compile_statement(VM * vm, Statement * stmt);
 #endif
+
+Declaration * read_declarations(Function * func);

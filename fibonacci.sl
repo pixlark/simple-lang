@@ -1,7 +1,9 @@
 func f(a, b)
 {
-	let x = 3;
-	let y = 4;
+	let x;
+	let y;
+	set x = a;
+	set y = b;
 }
 
 func main()

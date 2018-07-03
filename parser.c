@@ -366,9 +366,9 @@ void print_statement(Statement * stmt)
 		printf(")");
 		break;
 	case STMT_DECL:
-		printf("(let %s ", stmt->stmt_decl.bind_name);
-		print_expression(stmt->stmt_decl.bind_expr);
-		printf(")");
+		printf("(let %s)", stmt->stmt_decl.name);
+		//print_expression(stmt->stmt_decl.bind_expr);
+		//printf(")");
 		break;
 	case STMT_IF:
 		printf("(");
@@ -564,11 +564,13 @@ Statement * parse_decl()
 	expect_token(TOKEN_LET);
 	Statement * stmt = make_stmt(STMT_DECL);
 	check_token(TOKEN_NAME);
-	stmt->stmt_decl.bind_name = token.name;
+	stmt->stmt_decl.name = token.name;
 	next_token();
+	expect_token(';');
+	/*
 	expect_token('=');
 	stmt->stmt_decl.bind_expr = parse_expression();
-	expect_token(';');
+	expect_token(';');*/
 	return stmt;
 }
 
