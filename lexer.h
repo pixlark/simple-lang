@@ -16,6 +16,7 @@ typedef enum Token_Type {
 	TOKEN_ELIF,
 	TOKEN_ELSE,
 	TOKEN_FUNC,
+	TOKEN_RETURN,
 	// Two-char nonterminals
 	TOKEN_EQ,
 	TOKEN_GTE,

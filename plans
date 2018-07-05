@@ -34,12 +34,16 @@ if_statement = 'if' expression scope {'elif' expression scope} ['else' scope]
 # While
 while_statement = 'while' expression scope
 
+# Return
+return_statement = 'return' expression ';'
+
 # Scope
 statement = lone_expr
 		  | assignment
 		  | declaration
 		  | if_statement
 		  | while_statement
+		  | return_statement
 		  | scope
 scope = '{' {statement} '}'
 
@@ -51,7 +55,68 @@ file = {func_decl}
 
 --------------
 
+Variables:
+Declared with let
+Assigned with set
 
+--------------
+
+  func add(a, b) {
+  	  let c;
+	  set c = a + b;
+      return c;
+  }
+
+  func main() {
+      add(1, 2);
+  }
+
+gets compiled to:
+
+add:
+  load  4 ; load arg 0 onto op stack
+  load  3 ; load arg 1 onto op stack
+  add     ; add arg 0 and arg 1
+  save  2 ; pop op stack and save to c
+  load  2 ; load c onto op stack
+  load  1 ; load saved ip
+  jip     ; pop op stack and jump to address
+  
+main:
+  pushc 1   ; arg 0
+  pushc 2   ; arg 1
+  pushc 0   ; c
+  jsip  add ; push ip to call stack and jump to procedure
+  popc      ; pop ip off stack
+  popc
+  popc
+  popc      ; pop arguments off call stack
+
+--------------
+
+Compile pipeline:
+
+1. Collect all declarations per function in a list
+2. Tag all appearances of each name in the function with an index
+   into the list - respecting any variable shadowing/descoping.
+
+--------------
+
+Anatomy of a stack frame:
+
+... previous ...
+first_arg
+second_arg
+...
+last_arg
+first_declared
+second_declared
+...
+last_declared
+return_ip
+... next ...
+
+--------------
 
 VM Design:
 

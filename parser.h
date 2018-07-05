@@ -9,6 +9,7 @@ typedef enum Stmt_Type {
 	STMT_DECL,
 	STMT_IF,
 	STMT_WHILE,
+	STMT_RETURN,
 	STMT_SCOPE,
 } Stmt_Type;
 
@@ -80,6 +81,9 @@ typedef struct Statement {
 			Statement * scope;
 		} stmt_while;
 		struct {
+			Expression * expr;
+		} stmt_return;
+		struct {
 			Statement ** body;
 		} stmt_scope;
     };
@@ -108,6 +112,7 @@ typedef struct Expression {
 		} binary;
 		struct {
 			const char * name;
+			int decl_pos;
 		} name;
 		struct {
 			u64 value;
@@ -138,11 +143,12 @@ Expression * parse_bool_ops();
 Expression * parse_mul_ops();
 Expression * parse_add_ops();
 Expression * parse_expression();
-Statement * parse_while();
-Statement * parse_lone_expr();
-Statement * parse_assign();
-Statement * parse_decl();
-Statement * parse_if();
+Statement  * parse_return();
+Statement  * parse_while();
+Statement  * parse_lone_expr();
+Statement  * parse_assign();
+Statement  * parse_decl();
+Statement  * parse_if();
 
 Statement * parse_scope();
 Statement * parse_statement();

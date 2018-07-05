@@ -30,6 +30,9 @@ void token_type_str(char * buf, Token_Type type)
 		case TOKEN_FUNC:
 			sprintf(buf, "func");
 			break;
+		case TOKEN_RETURN:
+			sprintf(buf, "return");
+			break;
 		case TOKEN_GTE:
 			sprintf(buf, ">=");
 			break;
@@ -67,13 +70,14 @@ void lex_init()
 {
 	keyword_map = make_map(16);
 
-	map_insert(keyword_map, (u64) str_intern("let"),   (u64) TOKEN_LET);
-	map_insert(keyword_map, (u64) str_intern("set"),   (u64) TOKEN_SET);
-	map_insert(keyword_map, (u64) str_intern("while"), (u64) TOKEN_WHILE);
-	map_insert(keyword_map, (u64) str_intern("if"),    (u64) TOKEN_IF);
-	map_insert(keyword_map, (u64) str_intern("elif"),  (u64) TOKEN_ELIF);
-	map_insert(keyword_map, (u64) str_intern("else"),  (u64) TOKEN_ELSE);
-	map_insert(keyword_map, (u64) str_intern("func"),  (u64) TOKEN_FUNC);	
+	map_insert(keyword_map, (u64) str_intern("let"),     (u64) TOKEN_LET);
+	map_insert(keyword_map, (u64) str_intern("set"),     (u64) TOKEN_SET);
+	map_insert(keyword_map, (u64) str_intern("while"),   (u64) TOKEN_WHILE);
+	map_insert(keyword_map, (u64) str_intern("if"),      (u64) TOKEN_IF);
+	map_insert(keyword_map, (u64) str_intern("elif"),    (u64) TOKEN_ELIF);
+	map_insert(keyword_map, (u64) str_intern("else"),    (u64) TOKEN_ELSE);
+	map_insert(keyword_map, (u64) str_intern("func"),    (u64) TOKEN_FUNC);
+	map_insert(keyword_map, (u64) str_intern("return"),  (u64) TOKEN_RETURN);
 }
 
 void init_stream(const char * source)

@@ -108,16 +108,121 @@ void compile_statement(VM * vm, Statement * stmt)
 }
 #endif
 
-Declaration * read_declarations(Function * func)
+void tag_names_in_expr(Expression * expr, const char * name, int pos)
+{
+	switch (expr->type) {
+	case EXPR_UNARY:
+		tag_names_in_expr(expr->unary.right, name, pos);
+		break;
+	case EXPR_INDEX:
+		tag_names_in_expr(expr->index.left, name, pos);
+		tag_names_in_expr(expr->index.right, name, pos);
+		break;
+	case EXPR_FUNCALL:
+		tag_names_in_expr(expr->funcall.name, name, pos);
+		for (int i = 0; i < sb_count(expr->funcall.args); i++) {
+			tag_names_in_expr(expr->funcall.args[i], name, pos);
+		}
+		break;
+	case EXPR_BINARY:
+		tag_names_in_expr(expr->binary.left, name, pos);
+		tag_names_in_expr(expr->binary.right, name, pos);
+		break;
+	case EXPR_NAME:
+		if (expr->name.name == name) {
+			printf("Tagged %s\n", name);
+			expr->name.decl_pos = pos;
+		}
+		break;
+	}
+}
+
+void tag_names(Statement * scope, int start, const char * name, int pos)
+{
+	assert(scope->type == STMT_SCOPE);
+	for (int i = start; i < sb_count(scope->stmt_scope.body); i++) {
+		Statement * it = scope->stmt_scope.body[i];
+		switch (it->type) {
+		case STMT_EXPR:
+			tag_names_in_expr(it->stmt_expr.expr, name, pos);
+			break;
+		case STMT_ASSIGN:
+			tag_names_in_expr(it->stmt_assign.left, name, pos);
+			tag_names_in_expr(it->stmt_assign.right, name, pos);
+			break;
+		case STMT_IF:
+			// Tag names in conditions
+			for (int i = 0; i < sb_count(it->stmt_if.conditions); i++) {
+				tag_names_in_expr(it->stmt_if.conditions[i], name, pos);
+			}
+			// Recurse with each if scope
+			for (int i = 0; i < sb_count(it->stmt_if.scopes); i++) {
+				tag_names(it->stmt_if.scopes[i], 0, name, pos);
+			}
+			if (it->stmt_if.else_scope) {
+				tag_names(it->stmt_if.else_scope, 0, name, pos);
+			}
+			break;
+		case STMT_WHILE:
+			// Tag names in condition
+			tag_names_in_expr(it->stmt_while.condition, name, pos);
+			// Recurse with the while scope
+			tag_names(it->stmt_while.scope, 0, name, pos);
+			break;
+		case STMT_RETURN:
+			tag_names_in_expr(it->stmt_return.expr, name, pos);
+			break;
+		case STMT_SCOPE:
+			tag_names(it, 0, name, pos);
+			break;
+		}
+	}
+}
+
+void read_declarations(Declaration ** decls, Statement * stmt)
+{
+	switch (stmt->type) {
+	case STMT_IF:
+		// Recurse with each if scope
+		for (int i = 0; i < sb_count(stmt->stmt_if.scopes); i++) {
+			read_declarations(decls, stmt->stmt_if.scopes[i]);
+		}
+		if (stmt->stmt_if.else_scope) {
+			read_declarations(decls, stmt->stmt_if.else_scope);
+		}
+		break;
+	case STMT_WHILE:
+		// Recurse with the while scope
+		read_declarations(decls, stmt->stmt_while.scope);
+		break;
+	case STMT_SCOPE:
+		for (int i = 0; i < sb_count(stmt->stmt_scope.body); i++) {
+			Statement * it = stmt->stmt_scope.body[i];
+			if (it->type == STMT_DECL) {
+				printf("Declaration: %s\n", it->stmt_decl.name);
+				Declaration decl;
+				decl.name = it->stmt_decl.name;
+				decl.size = sizeof(u64); // No types at the moment
+				decl.decl_pos = sb_count(*decls);
+				tag_names(stmt, i, it->stmt_decl.name, sb_count(*decls));
+				sb_push(*decls, decl);
+			} else {
+				read_declarations(decls, it);
+			}
+		}
+		break;
+	}
+}
+
+Declaration * read_function_decls(Function * func)
 {
 	Declaration * decls = 0;
-	for (int i = 0; i < sb_count(func->body->stmt_scope.body); i++) {
-		Statement * stmt = func->body->stmt_scope.body[i];
-		if (stmt->type != STMT_DECL) continue;
-		Declaration decl;
-		decl.name = stmt->stmt_decl.name;
-		decl.size = sizeof(u64); // No types at the moment
-		sb_push(decls, decl);
-	}
+	read_declarations(&decls, func->body);
 	return decls;
+}
+
+
+void compile_function(Function * func)
+{
+	func->decls = read_function_decls(func);
 }
