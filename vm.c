@@ -48,7 +48,40 @@ char * inst_type_to_str[] = {
 	[INST_POPO]  = "POPO",
 	[INST_LOAD]  = "LOAD",
 	[INST_SAVE]  = "SAVE",
+	[INST_JMP]   = "JMP",
+	[INST_JZ]    = "JZ",
+	[INST_JNZ]   = "JNZ",
+	[INST_JIP]   = "JIP",
+	[INST_JSIP]  = "JSIP",
+	[INST_PRNT]  = "PRNT",
 };
+
+void print_instruction(Inst inst)
+{
+	printf("%s ", inst_type_to_str[inst.type]);
+	switch (inst.type) {
+	case INST_OP:
+		printf("%s\n", op_to_str[inst.arg0.op_type]);
+		break;
+	case INST_JMP:
+	case INST_JZ:
+	case INST_JNZ:
+	case INST_JSIP:
+		printf("%lu\n", inst.arg0.jmp_ip);
+		break;
+	case INST_LOAD:
+	case INST_SAVE:
+		printf("%lu\n", inst.arg0.offset);
+		break;
+	case INST_PUSHC:
+	case INST_PUSHO:
+		printf("%ld\n", inst.arg0.literal);
+		break;
+	default:
+		printf("\n");
+		break;
+	}
+}
 
 int vm_init(VM * vm)
 {
@@ -103,6 +136,30 @@ bool vm_step(VM * vm)
 		vm->call_stack[vm->call_sp - inst.arg0.offset] =
 			vm->op_stack[--vm->op_sp];
 		break;
+	case INST_JMP:
+	jump:
+		vm->ip = inst.arg0.jmp_ip;
+		break;
+	case INST_JZ: {
+		s64 pop = vm->op_stack[--vm->op_sp];
+		if (pop == 0) goto jump;
+	} break;
+	case INST_JNZ: {
+		s64 pop = vm->op_stack[--vm->op_sp];
+		if (pop != 0) goto jump;
+	} break;
+	case INST_PRNT: {
+		s64 pop = vm->op_stack[vm->op_sp];
+		printf("~~~~| %ld |~~~~\n", pop);
+	} break;
+	case INST_JIP: {
+		u64 pop = (u64) vm->op_stack[--vm->op_sp];
+		vm->ip = pop;
+	} break;
+	case INST_JSIP: {
+		vm->call_stack[vm->call_sp++] = vm->ip;
+		goto jump;
+	} break;
 	default:
 		internal_error("VM read invalid instruction");
 		break;
@@ -115,15 +172,43 @@ void vm_test()
 	VM _vm;
 	VM * vm = &_vm;
 	vm_init(vm);
-	sb_push(vm->insts, ((Inst){INST_PUSHC, (Inst_Arg){ .literal = 12 }}));
-	sb_push(vm->insts, ((Inst){INST_LOAD,  (Inst_Arg){ .offset  = 1  }}));
-	sb_push(vm->insts, ((Inst){INST_PUSHO, (Inst_Arg){ .literal = 3  }}));
-	sb_push(vm->insts, ((Inst){INST_OP, (Inst_Arg){ .op_type = OP_ADD}}));
-	sb_push(vm->insts, ((Inst){INST_SAVE,  (Inst_Arg){ .offset  = 1  }}));
-	sb_push(vm->insts, ((Inst){INST_POPC}));
-	sb_push(vm->insts, ((Inst){INST_HALT}));
+
+	// add procedure
+	EMIT_ARG(INST_PUSHC, literal, 0);   // 0
+	EMIT_ARG(INST_LOAD, offset, 4);
+	EMIT_ARG(INST_LOAD, offset, 3);
+	EMIT_ARG(INST_OP, op_type, OP_ADD);
+	EMIT_ARG(INST_SAVE, offset, 1);     // 4
+	EMIT_ARG(INST_LOAD, offset, 1);
+	EMIT_ARG(INST_LOAD, offset, 2);
+	EMIT(INST_POPC);
+	EMIT(INST_JIP);                     // 8
+
+	vm->ip = 9;
+	// main
+	EMIT_ARG(INST_PUSHC, literal, 1);
+	EMIT_ARG(INST_PUSHC, literal, 2);
+	EMIT_ARG(INST_JSIP, jmp_ip, 0);
+	EMIT(INST_POPC);                    // 12
+	EMIT(INST_POPC);
+	EMIT(INST_POPC);
+	EMIT(INST_HALT);
+	
+	/*
+	EMIT_ARG(INST_PUSHC, literal, 12);
+	EMIT_ARG(INST_LOAD, offset, 1);
+	EMIT_ARG(INST_PUSHO, literal, 3);
+	EMIT_ARG(INST_OP, op_type, OP_ADD);
+	EMIT_ARG(INST_SAVE, offset, 1);
+	EMIT(INST_POPC);
+	EMIT(INST_HALT);*/
+
+	#define CYCLE_LIMIT 100
+	int cycles = 0;
 	do {
+		#if VM_TEST_DEBUG
 		printf("----\n");
+		printf("IP: %d\n", vm->ip);
 		printf("Call Stack (%lu):\n", vm->call_sp);
 		if (vm->call_sp == 0) printf(" - \n");
 		for (int i = vm->call_sp - 1; i >= 0; i--) {
@@ -135,7 +220,11 @@ void vm_test()
 			printf(" %ld\n", vm->op_stack[i]);
 		}
 		printf("%s\n", inst_type_to_str[vm->insts[vm->ip].type]);
-	} while (vm_step(vm));
+		#endif
+		cycles++;
+	} while (vm_step(vm) && cycles < CYCLE_LIMIT);
+	#if VM_TEST_DEBUG
 	printf("--------\n");
+	#endif
 }
 

@@ -108,6 +108,89 @@ void compile_statement(VM * vm, Statement * stmt)
 }
 #endif
 
+void compile_expression(VM * vm, Expression * expr)
+{
+	switch (expr->type) {
+	case EXPR_UNARY:
+		compile_expression(vm, expr->unary.right);
+		EMIT_ARG(INST_OP, op_type, expr->unary.type);
+		break;
+	case EXPR_BINARY:
+		compile_expression(vm, expr->binary.left);
+		compile_expression(vm, expr->binary.right);
+		EMIT_ARG(INST_OP, op_type, expr->binary.type);
+		break;
+	case EXPR_INDEX:
+		internal_error("Indexing operator not yet supported");
+		break;
+	case EXPR_FUNCALL:
+		break;
+	case EXPR_NAME:
+		break;
+	case EXPR_LITERAL:
+		EMIT_ARG(INST_PUSHO, literal, expr->literal.value);
+		break;
+	}
+}
+
+void compile_statement(VM * vm, Statement * stmt)
+{
+	switch (stmt->type) {
+	case STMT_EXPR:
+		compile_expression(vm, stmt->stmt_expr.expr);
+		EMIT(INST_POPO);
+		break;
+	case STMT_ASSIGN:
+		break;
+	case STMT_DECL:
+		break;
+	case STMT_IF: {
+		/* 0 CONDITION 0
+		 * 1 JZ 4
+		 * 2 BODY 0
+		 * 3 JMP 9
+		 * 4 CONDITION 1
+		 * 5 JZ 8
+		 * 6 BODY
+		 * 7 JMP 9
+		 * 8 ELSE_BODY
+		 */
+		assert(sb_count(stmt->stmt_if.conditions) == sb_count(stmt->stmt_if.scopes));
+		int * jmps = 0;
+		for (int i = 0; i < sb_count(stmt->stmt_if.conditions); i++) {
+			compile_expression(vm, stmt->stmt_if.conditions[i]);
+			int jz = sb_count(vm->insts);
+			EMIT(INST_JZ);
+			compile_statement(vm, stmt->stmt_if.scopes[i]);
+			sb_push(jmps, sb_count(vm->insts));
+			EMIT(INST_JMP);
+			vm->insts[jz].arg0.jmp_ip = sb_count(vm->insts);
+		}
+		if (stmt->stmt_if.else_scope) {
+			compile_statement(vm, stmt->stmt_if.else_scope);
+		}
+		for (int i = 0; i < sb_count(jmps); i++) {
+			vm->insts[jmps[i]].arg0.jmp_ip = sb_count(vm->insts);
+		}
+	} break;
+	case STMT_WHILE:
+		break;
+	case STMT_RETURN:
+		break;
+	case STMT_SCOPE:
+		for (int i = 0; i < sb_count(stmt->stmt_scope.body); i++) {
+			compile_statement(vm, stmt->stmt_scope.body[i]);
+		}
+		break;
+	}
+}
+
+void compile_function(VM * vm, Function * func)
+{
+	func->ip_start = sb_count(vm->insts);
+	compile_statement(vm, func->body);
+}
+
 void tag_names_in_expr(Expression * expr, const char * name, int pos)
 {
 	switch (expr->type) {
@@ -222,7 +305,7 @@ Declaration * read_function_decls(Function * func)
 }
 
 
-void compile_function(Function * func)
+void prepare_function(Function * func)
 {
 	func->decls = read_function_decls(func);
 }

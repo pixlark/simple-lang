@@ -73,22 +73,26 @@ Assigned with set
 
 gets compiled to:
 
+; -1 | c
+; -2 | return
+; -3 | b
+; -4 | a
 add:
+  pushc 0 ; c
   load  4 ; load arg 0 onto op stack
   load  3 ; load arg 1 onto op stack
   add     ; add arg 0 and arg 1
-  save  2 ; pop op stack and save to c
-  load  2 ; load c onto op stack
-  load  1 ; load saved ip
+  save  1 ; pop op stack and save to c
+  load  1 ; load c onto op stack
+  load  2 ; load saved ip
+  popc    ; pop c
   jip     ; pop op stack and jump to address
   
 main:
   pushc 1   ; arg 0
   pushc 2   ; arg 1
-  pushc 0   ; c
   jsip  add ; push ip to call stack and jump to procedure
   popc      ; pop ip off stack
-  popc
   popc
   popc      ; pop arguments off call stack
 
