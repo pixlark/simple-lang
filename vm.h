@@ -27,7 +27,7 @@ typedef enum Inst_Type {
 	INST_JIP,   // Jump to location popped off op stack
 	INST_JSIP,  // Push instruction pointer to call stack and jump to arg
 	// Debug
-	INST_PRNT,
+	INST_PRINT,
 } Inst_Type;
 
 extern char * inst_type_to_str[];

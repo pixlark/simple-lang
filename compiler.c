@@ -21,17 +21,32 @@ void compile_expression(VM * vm, Expression * expr)
 		internal_error("Indexing operator not yet supported");
 		break;
 	case EXPR_FUNCALL: {
+		const char * name = expr->funcall.name->name.name;
+		if (name == str_intern("print")) {
+			// TODO(pixlark): Create a real FFI, this is just a hack
+			// to get print working
+			if (sb_count(expr->funcall.args) != 1) {
+				fatal("print requires one argument");
+			}
+			compile_expression(vm, expr->funcall.args[0]);
+			EMIT(INST_PRINT);
+			break;
+		}
 		for (int i = 0; i < sb_count(expr->funcall.args); i++) {
 			EMIT_ARG(INST_PUSHC, literal, 0); // Make space for argument
 			compile_expression(vm, expr->funcall.args[i]);
 			EMIT_ARG(INST_SAVE, offset, 1);   // Save arg into space
 		}
-		const char * name = expr->funcall.name->name.name;
 		if (!map_index(function_map, (u64) name, NULL)) {
 			fatal("Function %s does not exist", name);
 		}
 		Function * func;
 		map_index(function_map, (u64) name, (u64*) &func);
+		if (sb_count(expr->funcall.args) != sb_count(func->arg_names)) {
+			fatal("Called procedure %s with %d arguments, expected %d",
+				func->name, sb_count(expr->funcall.args),
+				sb_count(func->arg_names));
+		}
 		EMIT_ARG(INST_JSIP, jmp_ip, func->ip_start);
 		EMIT(INST_POPC); // Pop ip
 		for (int i = 0; i < sb_count(expr->funcall.args); i++)
@@ -142,8 +157,9 @@ void compile(VM * vm)
 {
 	int iter = -1;
 	while ((iter = map_iter(function_map, iter)) != -1) {
+		/*
 		printf("Compiling function %s\n",
-			((Function*)function_map->values[iter])->name);
+		((Function*)function_map->values[iter])->name);*/
 		compile_function(vm,
 			(Function*) function_map->values[iter]);
 	}

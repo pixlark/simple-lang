@@ -39,22 +39,22 @@ void (*operators[])(VM*) = {
 #undef UNARY_OPERATOR
 
 char * inst_type_to_str[] = {
-	[INST_HALT]  = "HALT",
-	[INST_NOP]   = "NOP",
+	[INST_HALT]   = "HALT",
+	[INST_NOP]    = "NOP",
 	[INST_SYMBOL] = "SYMBOL",
-	[INST_OP]    = "OP",
-	[INST_PUSHC] = "PUSHC",
-	[INST_POPC]  = "POPC",
-	[INST_PUSHO] = "PUSHO",
-	[INST_POPO]  = "POPO",
-	[INST_LOAD]  = "LOAD",
-	[INST_SAVE]  = "SAVE",
-	[INST_JMP]   = "JMP",
-	[INST_JZ]    = "JZ",
-	[INST_JNZ]   = "JNZ",
-	[INST_JIP]   = "JIP",
-	[INST_JSIP]  = "JSIP",
-	[INST_PRNT]  = "PRNT",
+	[INST_OP]     = "OP",
+	[INST_PUSHC]  = "PUSHC",
+	[INST_POPC]   = "POPC",
+	[INST_PUSHO]  = "PUSHO",
+	[INST_POPO]   = "POPO",
+	[INST_LOAD]   = "LOAD",
+	[INST_SAVE]   = "SAVE",
+	[INST_JMP]    = "JMP",
+	[INST_JZ]     = "JZ",
+	[INST_JNZ]    = "JNZ",
+	[INST_JIP]    = "JIP",
+	[INST_JSIP]   = "JSIP",
+	[INST_PRINT]  = "PRINT",
 };
 
 void print_instruction(Inst inst)
@@ -150,9 +150,9 @@ bool vm_step(VM * vm)
 		s64 pop = vm->op_stack[--vm->op_sp];
 		if (pop != 0) goto jump;
 	} break;
-	case INST_PRNT: {
+	case INST_PRINT: {
 		s64 pop = vm->op_stack[vm->op_sp];
-		printf("~~~~| %ld |~~~~\n", pop);
+		printf("%ld\n", pop);
 	} break;
 	case INST_JIP: {
 		u64 pop = (u64) vm->op_stack[--vm->op_sp];

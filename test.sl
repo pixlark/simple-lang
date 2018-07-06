@@ -7,5 +7,5 @@ func add(a, b, c)
 
 func main()
 {
-	add(1, 2, 3);
+	print(add(1, 2, 3));
 }

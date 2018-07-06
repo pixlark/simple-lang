@@ -36,6 +36,7 @@ int main(int argc, char ** argv)
 
 	compile(vm);
 
+	#if CPU_STATE_REPORTING
 	printf("%d instructions generated\n", sb_count(vm->insts));
 	for (int i = 0; i < sb_count(vm->insts); i++) {
 		printf("%02d ", i);
@@ -44,10 +45,12 @@ int main(int argc, char ** argv)
 		else
 			print_instruction(vm->insts[i]);
 	}
+	#endif
 
 	#define CYCLE_LIMIT 100
 	int cycles = 0;
 	do {
+		#if CPU_STATE_REPORTING
 		printf("----\n");
 		printf("IP: %d\n", vm->ip);
 		printf("Call Stack (%lu):\n", vm->call_sp);
@@ -64,6 +67,7 @@ int main(int argc, char ** argv)
 		cycles++;
 		if (cycles >= CYCLE_LIMIT)
 			internal_error("Cycle overflow");
+		#endif
 	} while (vm_step(vm));
 	
 	#if 0
