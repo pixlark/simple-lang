@@ -403,6 +403,11 @@ Function * parse_function()
 	func->body = parse_scope();
 }
 
+bool tokens_left()
+{
+	return token.type;
+}
+
 void parse_test()
 {
 	//const char * source = "round(f() + 3, digits()) * -3;";

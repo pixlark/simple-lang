@@ -79,18 +79,26 @@ gets compiled to:
 ; -4 | a
 add:
   pushc 0 ; c
+  
   load  4 ; load arg 0 onto op stack
   load  3 ; load arg 1 onto op stack
   add     ; add arg 0 and arg 1
   save  1 ; pop op stack and save to c
   load  1 ; load c onto op stack
+  jmp   add_ret
+
+add_ret:
   load  2 ; load saved ip
   popc    ; pop c
   jip     ; pop op stack and jump to address
   
 main:
-  pushc 1   ; arg 0
-  pushc 2   ; arg 1
+  pushc 0   ; arg 1
+  pusho 1
+  save  1
+  pushc 0   ; arg 1
+  pusho 2
+  save  1
   jsip  add ; push ip to call stack and jump to procedure
   popc      ; pop ip off stack
   popc

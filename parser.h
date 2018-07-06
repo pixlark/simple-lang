@@ -156,4 +156,6 @@ Statement * parse_statement();
 
 Function * parse_function();
 
+bool tokens_left();
+
 void parse_test();

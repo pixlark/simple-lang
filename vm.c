@@ -41,6 +41,7 @@ void (*operators[])(VM*) = {
 char * inst_type_to_str[] = {
 	[INST_HALT]  = "HALT",
 	[INST_NOP]   = "NOP",
+	[INST_SYMBOL] = "SYMBOL",
 	[INST_OP]    = "OP",
 	[INST_PUSHC] = "PUSHC",
 	[INST_POPC]  = "POPC",
@@ -98,6 +99,7 @@ bool vm_step(VM * vm)
 	case INST_HALT:
 		return false;
 	case INST_NOP:
+	case INST_SYMBOL:
 		break;
 	case INST_OP:
 		operators[inst.arg0.op_type](vm);

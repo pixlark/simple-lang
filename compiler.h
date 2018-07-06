@@ -20,8 +20,12 @@ typedef struct Declaration {
 	int decl_pos;
 } Declaration;
 
-void prepare_function(Function * func);
-void compile_function(VM * vm, Function * func);
+extern Map * function_map;
 
+void prepare();
+void prepare_function(Function * func);
+
+void compile(VM * vm);
+void compile_function(VM * vm, Function * func);
 void compile_expression(VM * vm, Expression * expr);
 void compile_statement(VM * vm, Statement * stmt);

@@ -1,11 +1,11 @@
-func add(a, b)
+func add(a, b, c)
 {
-	let c;
-	set c = a + b;
-	return c;
+	let d;
+	set d = a + b + c;
+	return d;
 }
 
 func main()
 {
-	add(1, 2);
+	add(1, 2, 3);
 }

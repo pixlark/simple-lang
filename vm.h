@@ -9,6 +9,7 @@
 typedef enum Inst_Type {
 	INST_HALT,
 	INST_NOP,
+	INST_SYMBOL,
 	INST_OP,
 	// Call stack
 	INST_PUSHC, // Push literal onto call stack
@@ -35,6 +36,7 @@ typedef union Inst_Arg {
 	s64 literal;
 	u64 offset;
 	u64 jmp_ip;
+	const char * symbol;
 	Operator_Type op_type;
 } Inst_Arg;
 
@@ -61,6 +63,6 @@ bool vm_step(VM * vm);
 void vm_test();
 
 #define EMIT(type) \
-	(sb_push(vm->insts, ((Inst){(type)})))
+	(sb_push(vm->insts, ((Inst){(type), (Inst_Arg){ .literal = 0 }})))
 #define EMIT_ARG(type, argname, arg) \
 	(sb_push(vm->insts, ((Inst){(type), (Inst_Arg){ .argname = arg }})))
